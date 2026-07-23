@@ -1,7 +1,7 @@
-import { getApps, initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,9 +12,22 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps()[0] ?? initializeApp(firebaseConfig);
+// Inicialização lazy: nada roda no import, só na primeira chamada (no browser).
+// Isso evita quebrar o prerender do build quando as envs não estão presentes.
+function getFirebaseApp(): FirebaseApp {
+  return getApps()[0] ?? initializeApp(firebaseConfig);
+}
 
-export const auth = getAuth(app);
+export function getFirebaseAuth(): Auth {
+  return getAuth(getFirebaseApp());
+}
+
+export function getDb(): Firestore {
+  return getFirestore(getFirebaseApp());
+}
+
+export function getFirebaseStorage(): FirebaseStorage {
+  return getStorage(getFirebaseApp());
+}
+
 export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
-export const storage = getStorage(app);
