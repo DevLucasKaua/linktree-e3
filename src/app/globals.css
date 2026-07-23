@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* Tokens do painel admin — identidade E3 (escuro + laranja) */
+:root {
+  --background: #0a0a0a;
+  --surface: #141414;
+  --border: #262626;
+  --foreground: #ededed;
+  --muted: #8a8a8a;
+  --accent: #ff6a00;
+  --accent-hover: #ff8534;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}

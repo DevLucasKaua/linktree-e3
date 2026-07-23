@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isManager() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/managers/$(request.auth.token.email));
+    }
+
+    // Allowlist de gestores: doc ID = e-mail em lowercase.
+    // Escrita apenas pelo console Firebase (nunca pelo app).
+    match /managers/{email} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /linktrees/{id} {
+      allow read, write: if isManager();
+    }
+  }
+}
