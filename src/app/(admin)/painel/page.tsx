@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   deleteLinktree,
+  duplicateLinktree,
   listLinktrees,
   updateLinktree,
   type LinktreeDoc,
@@ -36,6 +37,11 @@ export default function PainelPage() {
         )
       );
     }
+  }
+
+  async function handleDuplicate(linktree: LinktreeDoc) {
+    await duplicateLinktree(linktree, user?.email ?? "");
+    setLinktrees(await listLinktrees());
   }
 
   async function handleDelete(linktree: LinktreeDoc) {
@@ -112,6 +118,13 @@ export default function PainelPage() {
                   className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
                 >
                   Exportar
+                </button>
+                <button
+                  onClick={() => handleDuplicate(linktree)}
+                  title="Duplicar como base para outro cliente"
+                  className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
+                >
+                  Duplicar
                 </button>
                 <button
                   onClick={() => handleDelete(linktree)}

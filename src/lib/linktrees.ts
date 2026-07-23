@@ -5,10 +5,12 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
+  where,
   Timestamp,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
@@ -104,4 +106,37 @@ export async function updateLinktree(
 
 export async function deleteLinktree(id: string): Promise<void> {
   await deleteDoc(doc(getDb(), "linktrees", id));
+}
+
+/** Cria uma cópia (rascunho) de um linktree existente; retorna o novo id. */
+export async function duplicateLinktree(
+  source: LinktreeDoc,
+  userEmail: string
+): Promise<string> {
+  const created = await addDoc(linktreesRef(), {
+    clientName: `${source.clientName} (cópia)`,
+    slug: source.slug ? `${source.slug}-copia` : "",
+    bio: source.bio,
+    templateId: source.templateId,
+    palette: source.palette,
+    links: source.links.map((link) => ({ ...link, id: crypto.randomUUID() })),
+    photoUrl: source.photoUrl,
+    status: "rascunho",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    updatedBy: userEmail,
+  });
+  return created.id;
+}
+
+/** true se outro linktree (diferente de excludeId) já usa este slug. */
+export async function isSlugTaken(
+  slug: string,
+  excludeId: string
+): Promise<boolean> {
+  if (!slug) return false;
+  const snaps = await getDocs(
+    query(linktreesRef(), where("slug", "==", slug), limit(2))
+  );
+  return snaps.docs.some((snap) => snap.id !== excludeId);
 }

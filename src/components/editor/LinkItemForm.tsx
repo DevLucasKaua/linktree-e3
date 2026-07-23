@@ -12,6 +12,15 @@ const UTM_FIELDS: { key: keyof UtmParams; label: string }[] = [
   { key: "term", label: "term" },
 ];
 
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 export function LinkItemForm({
   link,
   index,
@@ -32,6 +41,8 @@ export function LinkItemForm({
   function updateUtm(key: keyof UtmParams, rawValue: string) {
     onUpdate({ utm: { ...link.utm, [key]: rawValue || undefined } });
   }
+
+  const urlInvalid = link.url.trim() !== "" && !isValidUrl(link.url);
 
   return (
     <div
@@ -115,8 +126,17 @@ export function LinkItemForm({
         onChange={(event) => onUpdate({ url: event.target.value })}
         placeholder="https://..."
         aria-label="URL"
-        className="rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+        className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
+          urlInvalid
+            ? "border-red-400 focus:border-red-400"
+            : "border-border focus:border-accent"
+        }`}
       />
+      {urlInvalid && (
+        <span className="text-xs text-red-400">
+          URL inválida — precisa começar com https:// (ou http://).
+        </span>
+      )}
 
       <details className="text-sm">
         <summary className="cursor-pointer select-none text-muted transition-colors hover:text-accent">

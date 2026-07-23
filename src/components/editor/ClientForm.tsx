@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SectionProps } from "@/components/editor/EditorShell";
-import type { LinktreeUpdate } from "@/lib/linktrees";
+import { isSlugTaken, type LinktreeUpdate } from "@/lib/linktrees";
 import { photoToDataUri } from "@/lib/photo";
 import { initials, slugify } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ export function ClientForm({ value, onChange }: SectionProps) {
   // Rascunho local do slug: só é aplicado (slugificado) no blur,
   // para não travar a digitação a cada tecla.
   const [slugDraft, setSlugDraft] = useState(value.slug);
+  const [slugTaken, setSlugTaken] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -33,8 +34,11 @@ export function ClientForm({ value, onChange }: SectionProps) {
     onChange(changes);
   }
 
-  function handleSlugBlur() {
-    onChange({ slug: slugify(slugDraft) });
+  async function handleSlugBlur() {
+    const slug = slugify(slugDraft);
+    onChange({ slug });
+    // Aviso (não bloqueante) se outro cliente já usa este slug.
+    setSlugTaken(await isSlugTaken(slug, value.id));
   }
 
   async function handleFileChange(file: File | null) {
@@ -92,6 +96,11 @@ export function ClientForm({ value, onChange }: SectionProps) {
               className="min-w-0 flex-1 bg-transparent px-3 py-2 font-mono text-sm outline-none"
             />
           </div>
+          {slugTaken && (
+            <span className="text-xs text-amber-400">
+              Atenção: outro cliente já usa este slug.
+            </span>
+          )}
         </label>
 
         {/* Bio */}
