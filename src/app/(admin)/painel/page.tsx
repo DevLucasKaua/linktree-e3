@@ -5,17 +5,38 @@ import Link from "next/link";
 import {
   deleteLinktree,
   listLinktrees,
+  updateLinktree,
   type LinktreeDoc,
 } from "@/lib/linktrees";
+import { exportBlockers, exportLinktreeZip } from "@/lib/export";
+import { useAuth } from "@/lib/auth-context";
 import { getTemplate } from "@/templates/registry";
 import { initials } from "@/lib/utils";
 
 export default function PainelPage() {
+  const { user } = useAuth();
   const [linktrees, setLinktrees] = useState<LinktreeDoc[] | null>(null);
 
   useEffect(() => {
     listLinktrees().then(setLinktrees);
   }, []);
+
+  async function handleExport(linktree: LinktreeDoc) {
+    const blockers = exportBlockers(linktree);
+    if (blockers.length > 0) {
+      alert(`Antes de publicar, edite e preencha: ${blockers.join(", ")}.`);
+      return;
+    }
+    await exportLinktreeZip(linktree);
+    if (linktree.status !== "publicado") {
+      await updateLinktree(linktree.id, { status: "publicado" }, user?.email ?? "");
+      setLinktrees((current) =>
+        (current ?? []).map((item) =>
+          item.id === linktree.id ? { ...item, status: "publicado" } : item
+        )
+      );
+    }
+  }
 
   async function handleDelete(linktree: LinktreeDoc) {
     const confirmed = confirm(
@@ -86,6 +107,12 @@ export default function PainelPage() {
                 >
                   Editar
                 </Link>
+                <button
+                  onClick={() => handleExport(linktree)}
+                  className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
+                >
+                  Exportar
+                </button>
                 <button
                   onClick={() => handleDelete(linktree)}
                   className="rounded-md border border-border px-3 py-1.5 text-sm text-red-400 transition-colors hover:border-red-400"

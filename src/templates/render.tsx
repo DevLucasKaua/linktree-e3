@@ -32,6 +32,9 @@ export function buildLinktreeHtml(
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(config.clientName)}</title>
 <meta name="description" content="${escapeHtml(config.bio)}">
+<meta property="og:title" content="${escapeHtml(config.clientName)}">
+<meta property="og:description" content="${escapeHtml(config.bio)}">
+<meta property="og:type" content="website">
 <link rel="stylesheet" href="${TABLER_ICONS_CDN}">
 <style>
 ${template.css(config.palette)}

@@ -7,6 +7,11 @@ import {
   type LinktreeDoc,
   type LinktreeUpdate,
 } from "@/lib/linktrees";
+import {
+  copyLinktreeHtml,
+  exportBlockers,
+  exportLinktreeZip,
+} from "@/lib/export";
 import { useAuth } from "@/lib/auth-context";
 import { TEMPLATES, getTemplate } from "@/templates/registry";
 import { PreviewFrame } from "@/components/editor/PreviewFrame";
@@ -74,6 +79,28 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     onChange({ templateId: template.id, palette: template.defaultPalette });
   }
 
+  function validateForExport(): boolean {
+    const blockers = exportBlockers(docState);
+    if (blockers.length > 0) {
+      alert(`Antes de publicar, preencha: ${blockers.join(", ")}.`);
+      return false;
+    }
+    return true;
+  }
+
+  async function handleExportZip() {
+    if (!validateForExport()) return;
+    await exportLinktreeZip(docState);
+    // Exportou ao menos uma vez: marca como publicado.
+    if (docState.status !== "publicado") onChange({ status: "publicado" });
+  }
+
+  async function handleCopyHtml() {
+    if (!validateForExport()) return;
+    await copyLinktreeHtml(docState);
+    alert("HTML copiado para a área de transferência!");
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -113,6 +140,18 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
               </option>
             ))}
           </select>
+          <button
+            onClick={handleCopyHtml}
+            className="rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent"
+          >
+            Copiar HTML
+          </button>
+          <button
+            onClick={handleExportZip}
+            className="rounded-md bg-accent px-3 py-1.5 font-medium text-black transition-colors hover:bg-accent-hover"
+          >
+            Baixar site (.zip)
+          </button>
         </div>
       </div>
 
