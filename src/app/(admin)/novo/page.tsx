@@ -1,15 +1,28 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { TEMPLATES } from "@/templates/registry";
 import type { TemplateDef } from "@/templates/types";
 import { TemplateCard } from "@/components/gallery/TemplateCard";
+import { createLinktree } from "@/lib/linktrees";
+import { useAuth } from "@/lib/auth-context";
 
 export default function NovoPage() {
-  function handleSelect(template: TemplateDef) {
-    // Sprint 4: criar o draft no Firestore e redirecionar para /editor/[id].
-    alert(
-      `Template "${template.name}" selecionado! A criação do linktree chega na Sprint 4.`
-    );
+  const { user } = useAuth();
+  const router = useRouter();
+  const [creating, setCreating] = useState(false);
+
+  async function handleSelect(template: TemplateDef) {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const id = await createLinktree(template.id, user?.email ?? "");
+      router.push(`/editor/${id}`);
+    } catch {
+      alert("Não foi possível criar o linktree. Tente novamente.");
+      setCreating(false);
+    }
   }
 
   return (
@@ -26,6 +39,7 @@ export default function NovoPage() {
             key={template.id}
             template={template}
             onSelect={handleSelect}
+            disabled={creating}
           />
         ))}
       </div>
