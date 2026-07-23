@@ -18,8 +18,9 @@ Painel admin onde gestores da E3 Digital montam bio-link pages (linktrees) para 
 ## Stack
 
 - Next.js (App Router) + React 19 + TypeScript + Tailwind v4 (`src/`, alias `@/`)
-- Firebase client SDK: Auth (Google + allowlist `managers/{email}`), Firestore (`linktrees/{id}`), Storage (`linktrees/{id}/photo.*`)
-- Security rules versionadas em `firestore.rules` / `storage.rules` — a fronteira real de segurança; coladas manualmente no console Firebase a cada mudança.
+- Firebase client SDK: Auth (Google + allowlist `managers/{email}`), Firestore (`linktrees/{id}`)
+- **Sem Firebase Storage** (plano Spark): a foto do cliente é data URI JPEG (redimensionada a 800px em `src/lib/photo.ts`) gravada no campo `photoUrl` do próprio documento.
+- Security rules versionadas em `firestore.rules` — a fronteira real de segurança; coladas manualmente no console Firebase a cada mudança.
 
 ## Arquitetura-chave
 
