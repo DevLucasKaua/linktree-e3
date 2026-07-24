@@ -4,6 +4,8 @@ import { useRef } from "react";
 import type { LinkItem, LinkItemType } from "@/templates/types";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { LinkItemForm } from "@/components/editor/LinkItemForm";
+import { Section } from "@/components/ui/Section";
+import { Button } from "@/components/ui/Button";
 
 /** Padrões de cada tipo de bloco no menu de adicionar. */
 const ADD_OPTIONS: {
@@ -105,45 +107,40 @@ export function LinksEditor({ value, onChange }: SectionProps) {
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
-      <h2 className="font-semibold">Links e blocos</h2>
+    <Section title="Links e blocos">
+      <div className="flex flex-col gap-4">
+        {links.length === 0 ? (
+          <p className="text-sm text-muted">
+            Nenhum bloco ainda — adicione o primeiro.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {links.map((link, index) => (
+              <LinkItemForm
+                key={link.id}
+                link={link}
+                index={index}
+                total={links.length}
+                onUpdate={(changes) => handleUpdate(index, changes)}
+                onRemove={() => handleRemove(index)}
+                onDuplicate={() => handleDuplicate(index)}
+                onMove={(direction) => handleMove(index, direction)}
+                onDragStart={() => handleDragStart(index)}
+                onDragEnter={() => handleDragEnter(index)}
+                onDragEnd={handleDragEnd}
+              />
+            ))}
+          </div>
+        )}
 
-      {links.length === 0 ? (
-        <p className="text-sm text-muted">
-          Nenhum bloco ainda — adicione o primeiro.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {links.map((link, index) => (
-            <LinkItemForm
-              key={link.id}
-              link={link}
-              index={index}
-              total={links.length}
-              onUpdate={(changes) => handleUpdate(index, changes)}
-              onRemove={() => handleRemove(index)}
-              onDuplicate={() => handleDuplicate(index)}
-              onMove={(direction) => handleMove(index, direction)}
-              onDragStart={() => handleDragStart(index)}
-              onDragEnter={() => handleDragEnter(index)}
-              onDragEnd={handleDragEnd}
-            />
+        <div className="flex flex-wrap items-center gap-2">
+          {ADD_OPTIONS.map(({ type, buttonLabel, defaults }) => (
+            <Button key={type} onClick={() => handleAdd(type, defaults)}>
+              {buttonLabel}
+            </Button>
           ))}
         </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        {ADD_OPTIONS.map(({ type, buttonLabel, defaults }) => (
-          <button
-            key={type}
-            type="button"
-            onClick={() => handleAdd(type, defaults)}
-            className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
-          >
-            {buttonLabel}
-          </button>
-        ))}
       </div>
-    </section>
+    </Section>
   );
 }

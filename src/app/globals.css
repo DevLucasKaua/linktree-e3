@@ -1,30 +1,263 @@
 @import "tailwindcss";
 
-/* Tokens do painel admin — identidade E3 (escuro + laranja) */
+/*
+ * Tokens do painel admin — linguagem "clash" (referência NeuroBank):
+ * navy quase-preto, cartões glass, glow e gradiente laranja da logo E3
+ * (#ff2f01 → #fc8900). Dark é o padrão; [data-theme="light"] replica a
+ * variante clara do vídeo. Os templates exportados dos clientes não mudam.
+ */
 :root {
-  --background: #0a0a0a;
-  --surface: #141414;
-  --border: #262626;
-  --foreground: #ededed;
-  --muted: #8a8a8a;
-  --accent: #ff6a00;
-  --accent-hover: #ff8534;
+  --bg: #0b0c10;
+  --surface: rgba(13, 14, 19, 0.92);
+  --surface-2: #15161c;
+  --ink: #f2f3f7;
+  --muted: #8a8f9c;
+  --soft: #b6bac6;
+  --hair: rgba(255, 255, 255, 0.08);
+  --hover: rgba(255, 255, 255, 0.05);
+  --active: #23242b;
+  --seg: rgba(255, 255, 255, 0.06);
+  --seg-active: #ffffff;
+  --seg-ink: #17181c;
+  --field: rgba(255, 255, 255, 0.04);
+  --brand-a: #ff2f01;
+  --brand-b: #fc8900;
+  --accent: #fd5b01;
+  --accent-soft: rgba(253, 91, 1, 0.14);
+  --accent-deep: #ffa45c;
+  --pos: #2dd4bf;
+  --neg: #ff6b6b;
+  --warn: #ffc24b;
+  --warn-soft: rgba(255, 194, 75, 0.12);
+  --blob-1: rgba(255, 47, 1, 0.15);
+  --blob-2: rgba(252, 137, 0, 0.09);
+  --blob-3: rgba(120, 130, 180, 0.07);
+  --elev-1: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --elev-2: 0 32px 64px rgba(0, 0, 0, 0.6);
+  --glow-accent: 0 8px 24px rgba(253, 91, 1, 0.35);
+}
+
+[data-theme="light"] {
+  --bg: #e9ebf2;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-2: #f4f5f9;
+  --ink: #17181c;
+  --muted: #7a7f8c;
+  --soft: #565b66;
+  --hair: rgba(23, 24, 28, 0.08);
+  --hover: rgba(23, 24, 28, 0.05);
+  --active: #ffffff;
+  --seg: rgba(23, 24, 28, 0.06);
+  --seg-active: #ffffff;
+  --seg-ink: #17181c;
+  --field: rgba(23, 24, 28, 0.04);
+  --accent: #f24f00;
+  --accent-soft: rgba(242, 79, 0, 0.12);
+  --accent-deep: #c23a00;
+  --pos: #0d9488;
+  --neg: #dc2626;
+  --warn: #b45309;
+  --warn-soft: rgba(180, 83, 9, 0.12);
+  --blob-1: rgba(255, 47, 1, 0.09);
+  --blob-2: rgba(252, 137, 0, 0.06);
+  --blob-3: rgba(90, 105, 170, 0.06);
+  --elev-1: 0 8px 28px rgba(23, 24, 28, 0.1);
+  --elev-2: 0 32px 64px rgba(23, 24, 28, 0.18);
+  --glow-accent: 0 8px 24px rgba(253, 91, 1, 0.25);
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-border: var(--border);
-  --color-foreground: var(--foreground);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-soft: var(--soft);
+  --color-hair: var(--hair);
+  --color-hover: var(--hover);
+  --color-active: var(--active);
+  --color-seg: var(--seg);
+  --color-seg-active: var(--seg-active);
+  --color-seg-ink: var(--seg-ink);
+  --color-field: var(--field);
+  --color-brand-a: var(--brand-a);
+  --color-brand-b: var(--brand-b);
   --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-deep: var(--accent-deep);
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --shadow-card: var(--elev-1);
+  --shadow-big: var(--elev-2);
+  --shadow-glow: var(--glow-accent);
+  --shadow-seg: 0 1px 3px rgba(0, 0, 0, 0.18);
+
+  --animate-pop: pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-rise: rise 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  --animate-menu-in: menu-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-toast-in: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+@keyframes menu-in {
+  from {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes toast-in {
+  from {
+    transform: translate(-50%, 80px);
+  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--bg);
+  color: var(--ink);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Fundo chapado com blobs orgânicos suaves (sem grade) */
+  background-image:
+    radial-gradient(900px 700px at 10% 112%, var(--blob-1), transparent 65%),
+    radial-gradient(720px 560px at 94% -8%, var(--blob-2), transparent 62%),
+    radial-gradient(640px 520px at 80% 78%, var(--blob-3), transparent 60%);
+  background-attachment: fixed;
+  transition:
+    background-color 0.25s,
+    color 0.25s;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/*
+ * Liquid Glass (tradução CSS do material da Apple):
+ * desfoca o fundo E reflete cor/luz ao redor (blur + saturate), fundo em
+ * gradiente translúcido, luz interna superior e borda especular de 1px
+ * (::before com mask) que brilha no topo-esquerda e retorna no rodapé.
+ */
+.glass,
+.glass-strong,
+.glass-tint {
+  position: relative;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.glass,
+.glass-strong {
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.02)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 24px rgba(255, 255, 255, 0.03);
+}
+
+/* Camada flutuante (menus, modais, toast, popovers): vidro mais denso */
+.glass-strong {
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.03)
+  );
+}
+
+/* Vidro tintado no gradiente da marca (primário/CTA — "tint" da doc Apple) */
+.glass-tint {
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 47, 1, 0.9),
+    rgba(252, 137, 0, 0.88)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    var(--glow-accent);
+}
+
+/* Borda especular de 1px sobre a borda base, ciente do border-radius */
+.glass::before,
+.glass-strong::before,
+.glass-tint::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.07) 38%,
+    transparent 62%,
+    rgba(255, 255, 255, 0.16)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* "Interactive" da doc Apple: reação fluida ao toque */
+.pressable {
+  transition:
+    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.15s;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/*
+ * "Liquid glass": botão circular cravado no canto de um card com
+ * overflow-hidden — o anel na cor do backdrop esculpe o recorte côncavo.
+ */
+.carve {
+  box-shadow: 0 0 0 10px var(--bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

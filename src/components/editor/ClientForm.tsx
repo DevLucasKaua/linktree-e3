@@ -6,6 +6,9 @@ import { isSlugTaken, type LinktreeUpdate } from "@/lib/linktrees";
 import { useAuth } from "@/lib/auth-context";
 import { photoToDataUri } from "@/lib/photo";
 import { initials, slugify } from "@/lib/utils";
+import { Section } from "@/components/ui/Section";
+import { Field, FieldLabel, Input, Textarea } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
 
 const BIO_MAX = 160;
 
@@ -69,29 +72,21 @@ export function ClientForm({ value, onChange }: SectionProps) {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-surface p-5">
-      <h2 className="mb-4 text-lg font-semibold">Dados do cliente</h2>
-
+    <Section title="Dados do cliente">
       <div className="flex flex-col gap-4">
-        {/* Nome */}
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Nome do cliente</span>
-          <input
-            type="text"
+        <Field label="Nome do cliente">
+          <Input
             value={value.clientName}
             onChange={(event) => handleNameChange(event.target.value)}
             placeholder="Ex: Dra. Ana Beatriz Rocha"
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
-        </label>
+        </Field>
 
-        {/* Slug */}
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">
-            Slug (nome da pasta no deploy)
-          </span>
-          <div className="flex items-center overflow-hidden rounded-md border border-border bg-background transition-colors focus-within:border-accent">
-            <span className="shrink-0 border-r border-border px-3 py-2 text-sm text-muted">
+        {/* Slug com prefixo fixo "pasta:" */}
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <FieldLabel>Slug (nome da pasta no deploy)</FieldLabel>
+          <div className="flex items-center overflow-hidden rounded-[10px] border border-hair bg-field transition-colors focus-within:border-accent">
+            <span className="shrink-0 border-r border-hair px-3 py-2 text-sm text-muted">
               pasta:
             </span>
             <input
@@ -100,46 +95,44 @@ export function ClientForm({ value, onChange }: SectionProps) {
               onChange={(event) => setSlugDraft(event.target.value)}
               onBlur={handleSlugBlur}
               placeholder="ex: ana-beatriz-rocha"
-              className="min-w-0 flex-1 bg-transparent px-3 py-2 font-mono text-sm outline-none"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2 font-mono text-sm outline-none placeholder:text-muted"
             />
           </div>
           {slugTaken && (
-            <span className="text-xs text-amber-400">
+            <span className="text-xs text-warn">
               Atenção: outro cliente já usa este slug.
             </span>
           )}
         </label>
 
-        {/* Bio */}
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Bio</span>
-          <textarea
+        <label className="flex min-w-0 flex-col gap-1.5">
+          <FieldLabel>Bio</FieldLabel>
+          <Textarea
             rows={3}
             maxLength={BIO_MAX}
             value={value.bio}
             onChange={(event) => onChange({ bio: event.target.value })}
             placeholder="Uma frase curta sobre o cliente"
-            className="resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
-          <span className="self-end text-xs text-muted">
+          <span className="self-end font-mono text-xs text-muted">
             {value.bio.length}/{BIO_MAX}
           </span>
         </label>
 
         {/* Foto */}
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Foto do cliente</span>
+          <FieldLabel>Foto do cliente</FieldLabel>
           <div className="flex items-center gap-4">
             {value.photoUrl ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={value.photoUrl}
                 alt={`Foto de ${value.clientName}`}
-                className="h-20 w-20 rounded-full border border-border object-cover"
+                className="h-20 w-20 rounded-full border border-hair object-cover"
               />
             ) : (
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-border bg-background">
-                <span className="text-xl font-semibold text-accent">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-hair bg-active">
+                <span className="text-xl font-semibold text-accent-deep">
                   {initials(value.clientName)}
                 </span>
               </div>
@@ -147,7 +140,8 @@ export function ClientForm({ value, onChange }: SectionProps) {
 
             <div className="flex flex-wrap items-center gap-2">
               {/* Input file escondido, acionado pelo label estilizado de botão */}
-              <label className="cursor-pointer rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent">
+              <label className="glass pressable inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-hair bg-field px-3.5 py-1.5 text-sm hover:bg-hover">
+                <i className="ti ti-upload" />
                 {uploading ? "Enviando…" : "Enviar foto"}
                 <input
                   ref={fileInputRef}
@@ -162,20 +156,19 @@ export function ClientForm({ value, onChange }: SectionProps) {
               </label>
 
               {value.photoUrl && (
-                <button
-                  type="button"
+                <Button
+                  variant="danger"
                   onClick={handleRemovePhoto}
                   disabled={uploading}
-                  className="rounded-md border border-border px-3 py-1.5 text-sm text-red-400 transition-colors hover:border-red-400"
                 >
                   Remover foto
-                </button>
+                </Button>
               )}
             </div>
           </div>
-          {photoError && <p className="text-sm text-red-400">{photoError}</p>}
+          {photoError && <p className="text-sm text-neg">{photoError}</p>}
         </div>
       </div>
-    </section>
+    </Section>
   );
 }

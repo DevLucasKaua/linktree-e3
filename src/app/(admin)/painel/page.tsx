@@ -22,6 +22,13 @@ import { useAuth } from "@/lib/auth-context";
 import { TEMPLATES, getTemplate } from "@/templates/registry";
 import { initials } from "@/lib/utils";
 import { QrCodeModal } from "@/components/QrCodeModal";
+import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/Confirm";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Menu } from "@/components/ui/Menu";
+import { Segmented } from "@/components/ui/Segmented";
+import { Select } from "@/components/ui/Field";
 
 type Tab = "ativos" | "lixeira";
 type SortKey = "updated" | "name" | "created";
@@ -32,9 +39,15 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "created", label: "Criação recente" },
 ];
 
+/** Link estilizado como chip glass (mesmo vocabulário do Button secondary). */
+const LINK_BUTTON_CLASS =
+  "glass pressable inline-flex items-center justify-center gap-1.5 rounded-full border border-hair bg-field px-3.5 py-1.5 text-sm hover:bg-hover";
+
 export default function PainelPage() {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
+  const toast = useToast();
+  const confirmDialog = useConfirm();
   const [linktrees, setLinktrees] = useState<LinktreeDoc[] | null>(null);
   const [qrTarget, setQrTarget] = useState<LinktreeDoc | null>(null);
   const [tab, setTab] = useState<Tab>("ativos");
@@ -61,6 +74,29 @@ export default function PainelPage() {
     () => (linktrees ?? []).filter((item) => item.deletedAt).length,
     [linktrees]
   );
+
+  /** Tiles bento do topo, calculados da lista já carregada. */
+  const stats = useMemo(() => {
+    const actives = (linktrees ?? []).filter((item) => !item.deletedAt);
+    return [
+      { label: "Linktrees ativos", value: actives.length, icon: "layout-grid" },
+      {
+        label: "Publicados",
+        value: actives.filter((item) => item.status === "publicado").length,
+        icon: "world-check",
+      },
+      {
+        label: "Rascunhos",
+        value: actives.filter((item) => item.status === "rascunho").length,
+        icon: "pencil",
+      },
+      {
+        label: "Export pendente",
+        value: actives.filter(hasUnexportedChanges).length,
+        icon: "clock-up",
+      },
+    ];
+  }, [linktrees]);
 
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -91,13 +127,20 @@ export default function PainelPage() {
   async function handleExport(linktree: LinktreeDoc) {
     const blockers = exportBlockers(linktree);
     if (blockers.length > 0) {
-      alert(`Antes de publicar, edite e preencha: ${blockers.join(", ")}.`);
+      toast(
+        `Antes de publicar, edite e preencha: ${blockers.join(", ")}.`,
+        "err"
+      );
       return;
     }
     const warnings = exportWarnings(linktree);
     if (
       warnings.length > 0 &&
-      !confirm(`Atenção:\n• ${warnings.join("\n• ")}\n\nExportar mesmo assim?`)
+      !(await confirmDialog({
+        title: "Exportar mesmo assim?",
+        message: `• ${warnings.join("\n• ")}`,
+        confirmLabel: "Exportar",
+      }))
     ) {
       return;
     }
@@ -107,12 +150,14 @@ export default function PainelPage() {
       status: "publicado",
       lastExportedAt: Timestamp.now(),
     });
+    toast("ZIP exportado — pronto para subir na hospedagem.");
   }
 
   function handleShowQr(linktree: LinktreeDoc) {
     if (!linktree.publishedUrl.trim()) {
-      alert(
-        'Edite o linktree e preencha a "URL publicada" para gerar o QR code.'
+      toast(
+        'Edite o linktree e preencha a "URL publicada" para gerar o QR code.',
+        "err"
       );
       return;
     }
@@ -122,89 +167,109 @@ export default function PainelPage() {
   async function handleDuplicate(linktree: LinktreeDoc) {
     await duplicateLinktree(linktree, user?.email ?? "");
     setLinktrees(await listLinktrees(user?.email ?? "", isAdmin));
+    toast("Linktree duplicado como rascunho.");
   }
 
   async function handleTrash(linktree: LinktreeDoc) {
     await softDeleteLinktree(linktree.id);
     patchLocal(linktree.id, { deletedAt: Timestamp.now() });
+    toast("Movido para a lixeira.");
   }
 
   async function handleRestore(linktree: LinktreeDoc) {
     await restoreLinktree(linktree.id);
     patchLocal(linktree.id, { deletedAt: null });
+    toast("Linktree restaurado.");
   }
 
   async function handleHardDelete(linktree: LinktreeDoc) {
-    const confirmed = confirm(
-      `Excluir DEFINITIVAMENTE o linktree de "${linktree.clientName}"? Essa ação não pode ser desfeita.`
-    );
+    const confirmed = await confirmDialog({
+      title: "Excluir definitivamente?",
+      message: `O linktree de "${linktree.clientName}" será apagado para sempre. Essa ação não pode ser desfeita.`,
+      confirmLabel: "Excluir para sempre",
+      danger: true,
+    });
     if (!confirmed) return;
     await deleteLinktree(linktree.id);
     setLinktrees((current) =>
       (current ?? []).filter((item) => item.id !== linktree.id)
     );
+    toast("Linktree excluído definitivamente.");
   }
 
-  const actionButtonClass =
-    "rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent";
+  const activesEmpty =
+    (linktrees ?? []).filter((item) => !item.deletedAt).length === 0;
 
   return (
-    <main className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">Linktrees</h1>
-          {/* Abas Ativos / Lixeira */}
-          <div className="flex items-center rounded-lg border border-border p-0.5 text-sm">
-            {(
-              [
-                { key: "ativos", label: "Ativos" },
-                { key: "lixeira", label: `Lixeira (${trashedCount})` },
-              ] as const
-            ).map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`rounded-md px-3 py-1 transition-colors ${
-                  tab === key
-                    ? "bg-accent font-medium text-black"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+    <main className="flex flex-1 flex-col gap-5">
+      {/* Cabeçalho da view */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-tight">
+            Linktrees
+          </h1>
+          <p className="mt-0.5 text-[13px] text-muted">
+            Páginas de bio-link dos clientes E3
+          </p>
         </div>
-        <Link
-          href="/novo"
-          className="rounded-lg bg-accent px-4 py-2 font-medium text-black transition-colors hover:bg-accent-hover"
-        >
-          + Novo linktree
-        </Link>
+        <Segmented
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "ativos", label: "Ativos" },
+            { value: "lixeira", label: `Lixeira (${trashedCount})` },
+          ]}
+        />
       </div>
 
-      {/* Busca, filtros e ordenação */}
+      {/* Bento de estatísticas */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {stats.map(({ label, value, icon }, index) => (
+          <div
+            key={label}
+            style={{ animationDelay: `${index * 40}ms` }}
+            className="glass flex animate-rise items-center gap-3 rounded-[20px] border border-hair bg-surface p-4"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-hair bg-field text-accent-deep">
+              <i className={`ti ti-${icon}`} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[22px] font-bold leading-none tracking-tight">
+                {linktrees === null ? "–" : value}
+              </p>
+              <p className="mt-1 truncate font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-muted">
+                {label}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Busca, filtros e ordenação (chips glass) */}
       <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por nome ou slug…"
-          className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-accent sm:max-w-xs"
-        />
-        <select
+        <div className="relative min-w-0 flex-1 sm:max-w-xs">
+          <i className="ti ti-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por nome ou slug…"
+            className="glass w-full rounded-full border border-hair bg-field py-2 pl-9 pr-4 text-sm outline-none transition-[border-color,box-shadow] placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)]"
+          />
+        </div>
+        <Select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
-          className="rounded-md border border-border bg-surface px-2 py-2 text-sm"
+          className="w-auto"
         >
           <option value="todos">Todos os status</option>
           <option value="publicado">Publicado</option>
           <option value="rascunho">Rascunho</option>
-        </select>
-        <select
+        </Select>
+        <Select
           value={templateFilter}
           onChange={(event) => setTemplateFilter(event.target.value)}
-          className="rounded-md border border-border bg-surface px-2 py-2 text-sm"
+          className="w-auto"
         >
           <option value="todos">Todos os templates</option>
           {Object.values(TEMPLATES).map((template) => (
@@ -212,133 +277,197 @@ export default function PainelPage() {
               {template.name}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           value={sortKey}
           onChange={(event) => setSortKey(event.target.value as SortKey)}
-          className="rounded-md border border-border bg-surface px-2 py-2 text-sm"
+          className="w-auto"
         >
           {SORT_OPTIONS.map(({ key, label }) => (
             <option key={key} value={key}>
               {label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {linktrees === null ? (
-        <p className="text-muted">Carregando…</p>
+        /* Skeleton em grid */
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-hidden>
+          {[0, 1, 2].map((row) => (
+            <li
+              key={row}
+              className="glass flex animate-pulse flex-col gap-3 rounded-[20px] border border-hair bg-surface p-5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 shrink-0 rounded-xl bg-hover" />
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <div className="h-3.5 w-36 rounded bg-hover" />
+                  <div className="h-3 w-24 rounded bg-hover" />
+                </div>
+              </div>
+              <div className="h-6 w-3/4 rounded bg-hover" />
+            </li>
+          ))}
+        </ul>
       ) : visible.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border p-12 text-center">
-          <p className="font-medium">
-            {tab === "lixeira"
-              ? "Lixeira vazia"
-              : linktrees.filter((item) => !item.deletedAt).length === 0
-                ? "Nenhum linktree ainda"
+        tab === "ativos" && activesEmpty ? (
+          /* Hero liquid-glass (estilo "AI Insights") para o primeiro linktree */
+          <div
+            className="relative overflow-hidden rounded-[20px] border border-hair p-8 md:p-10"
+            style={{
+              backgroundColor: "var(--surface-2)",
+              backgroundImage:
+                "radial-gradient(620px 320px at 18% -10%, rgba(255,47,1,0.32), transparent 62%), radial-gradient(520px 300px at 95% 110%, rgba(252,137,0,0.22), transparent 60%)",
+            }}
+          >
+            <span className="glass inline-flex items-center gap-1.5 rounded-full border border-hair bg-field px-3 py-1 text-xs">
+              <i className="ti ti-sparkles text-accent-deep" />
+              Comece aqui
+            </span>
+            <h2 className="mt-14 max-w-sm text-xl font-semibold tracking-tight">
+              Nenhum linktree ainda — crie o primeiro em minutos.
+            </h2>
+            <p className="mb-2 mt-1.5 max-w-md pr-14 text-sm text-soft">
+              Escolha um template, personalize cores, links e blocos, e exporte
+              o ZIP pronto para publicar.
+            </p>
+            <Link
+              href="/novo"
+              aria-label="Criar o primeiro linktree"
+              className="carve pressable absolute -bottom-1.5 -right-1.5 flex h-12 w-12 items-center justify-center rounded-full border border-hair bg-surface-2 text-ink transition-transform hover:scale-105"
+            >
+              <i className="ti ti-arrow-up-right text-lg" />
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-[20px] border border-dashed border-hair p-12 text-center">
+            <i
+              className={`ti ${tab === "lixeira" ? "ti-trash-off" : "ti-filter-off"} text-2xl text-muted`}
+            />
+            <p className="font-medium">
+              {tab === "lixeira"
+                ? "Lixeira vazia"
                 : "Nada encontrado com esses filtros"}
-          </p>
-          {tab === "ativos" &&
-            linktrees.filter((item) => !item.deletedAt).length === 0 && (
-              <p className="text-sm text-muted">
-                Crie o primeiro escolhendo um template.
-              </p>
-            )}
-        </div>
+            </p>
+          </div>
+        )
       ) : (
-        <ul className="flex flex-col gap-3">
-          {visible.map((linktree) => (
+        /* Grid de cards estilo "Documents" */
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {visible.map((linktree, index) => (
             <li
               key={linktree.id}
-              className="flex items-center gap-4 rounded-xl border border-border bg-surface p-4"
+              style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
+              className="glass flex animate-rise flex-col gap-3 rounded-[20px] border border-hair bg-surface p-5 transition-shadow hover:shadow-card"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-background">
-                {linktree.photoUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={linktree.photoUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-semibold text-accent">
-                    {initials(linktree.clientName)}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-medium">{linktree.clientName}</p>
-                  {tab === "ativos" && hasUnexportedChanges(linktree) && (
-                    <span
-                      title="Houve edições depois do último export — exporte de novo para publicar"
-                      className="shrink-0 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-xs text-amber-400"
-                    >
-                      alterações não exportadas
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-hair bg-active">
+                  {linktree.photoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={linktree.photoUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-semibold text-accent-deep">
+                      {initials(linktree.clientName)}
                     </span>
                   )}
                 </div>
-                <p className="truncate text-sm text-muted">
-                  {getTemplate(linktree.templateId).name} ·{" "}
-                  {linktree.status === "publicado" ? "Publicado" : "Rascunho"}
-                  {linktree.updatedAt &&
-                    ` · ${linktree.updatedAt.toDate().toLocaleDateString("pt-BR")}`}
-                  {/* Dono: admin vê o gestor de cada linktree; todos veem o legado sem dono */}
-                  {isAdmin && linktree.ownerEmail && ` · ${linktree.ownerEmail}`}
-                  {!linktree.ownerEmail && " · sem dono"}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-semibold tracking-tight">
+                    {linktree.clientName}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-muted">
+                    {linktree.updatedAt
+                      ? linktree.updatedAt.toDate().toLocaleDateString("pt-BR")
+                      : "—"}
+                    {isAdmin &&
+                      linktree.ownerEmail &&
+                      ` · ${linktree.ownerEmail}`}
+                  </p>
+                </div>
+                <Menu
+                  items={
+                    tab === "ativos"
+                      ? [
+                          {
+                            label: "QR code",
+                            icon: "qrcode",
+                            onSelect: () => handleShowQr(linktree),
+                          },
+                          {
+                            label: "Duplicar",
+                            icon: "copy",
+                            onSelect: () => handleDuplicate(linktree),
+                          },
+                          {
+                            label: "Mover para a lixeira",
+                            icon: "trash",
+                            danger: true,
+                            onSelect: () => handleTrash(linktree),
+                          },
+                        ]
+                      : [
+                          {
+                            label: "Excluir definitivamente",
+                            icon: "trash-x",
+                            danger: true,
+                            onSelect: () => handleHardDelete(linktree),
+                          },
+                        ]
+                  }
+                />
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge
+                  variant={
+                    linktree.status === "publicado" ? "pos" : "neutral"
+                  }
+                >
+                  {linktree.status === "publicado" ? "Publicado" : "Rascunho"}
+                </Badge>
+                <Badge>{getTemplate(linktree.templateId).name}</Badge>
+                {tab === "ativos" && hasUnexportedChanges(linktree) && (
+                  <Badge
+                    variant="warn"
+                    title="Houve edições depois do último export — exporte de novo para publicar"
+                  >
+                    export pendente
+                  </Badge>
+                )}
+                {!linktree.ownerEmail && <Badge>sem dono</Badge>}
+              </div>
+
+              <div className="mt-auto flex items-center gap-2 border-t border-hair pt-3">
                 {tab === "ativos" ? (
                   <>
                     <Link
                       href={`/editor/${linktree.id}`}
-                      className={actionButtonClass}
+                      className={`${LINK_BUTTON_CLASS} flex-1`}
                     >
+                      <i className="ti ti-pencil" />
                       Editar
                     </Link>
-                    <button
+                    <Button
+                      className="flex-1"
                       onClick={() => handleExport(linktree)}
-                      className={actionButtonClass}
                     >
+                      <i className="ti ti-download" />
                       Exportar
-                    </button>
-                    <button
-                      onClick={() => handleShowQr(linktree)}
-                      title="QR code da URL publicada"
-                      className={actionButtonClass}
-                    >
-                      QR Code
-                    </button>
-                    <button
-                      onClick={() => handleDuplicate(linktree)}
-                      title="Duplicar como base para outro cliente"
-                      className={actionButtonClass}
-                    >
-                      Duplicar
-                    </button>
-                    <button
-                      onClick={() => handleTrash(linktree)}
-                      title="Mover para a lixeira (dá para restaurar)"
-                      className="rounded-md border border-border px-3 py-1.5 text-sm text-red-400 transition-colors hover:border-red-400"
-                    >
-                      Excluir
-                    </button>
+                    </Button>
                   </>
                 ) : (
-                  <>
-                    <button
-                      onClick={() => handleRestore(linktree)}
-                      className={actionButtonClass}
-                    >
-                      Restaurar
-                    </button>
-                    <button
-                      onClick={() => handleHardDelete(linktree)}
-                      className="rounded-md border border-border px-3 py-1.5 text-sm text-red-400 transition-colors hover:border-red-400"
-                    >
-                      Excluir definitivo
-                    </button>
-                  </>
+                  <Button
+                    className="flex-1"
+                    onClick={() => handleRestore(linktree)}
+                  >
+                    <i className="ti ti-arrow-back-up" />
+                    Restaurar
+                  </Button>
                 )}
               </div>
             </li>

@@ -13,7 +13,8 @@ Painel admin onde gestores da E3 Digital montam bio-link pages (linktrees) para 
 - **Somente o usuário faz commits.** Assistentes nunca rodam `git commit`/`git push` — param no checkpoint, informam os comandos e a mensagem, e aguardam.
 - Branches por sprint (`sprint-N-nome`), merge na `main` ao final de cada sprint.
 - UI e comentários em **pt-BR**.
-- Identidade E3: fundo escuro `#000`/`#0a0a0a`, acento laranja `#ff6a00`.
+- **Painel admin**: linguagem "clash" — navy quase-preto com cartões glass, bento grid, glow e gradiente laranja da logo (`#ff2f01→#fc8900`); **dark é o padrão**, light no toggle (`[data-theme]`, tokens em `src/app/globals.css`; logo em `public/logo-*.svg`). Usar sempre os componentes de `src/components/ui/` (`Button`/`Field`/`Section`/`Badge`/`Segmented`/`Menu`/`Modal`) e `useToast`/`useConfirm` (nunca `alert()`/`confirm()`).
+- **Templates exportados** (`src/templates/`): identidade E3 original preservada — fundo escuro `#000`/`#0a0a0a`, acento laranja `#ff6a00`.
 
 ## Stack
 

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
+import { ToastProvider } from "@/components/ui/Toast";
+import { ConfirmProvider } from "@/components/ui/Confirm";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,9 +29,17 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
+      data-theme="dark"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        {/* Aplica o tema salvo ANTES do primeiro paint (dark é o padrão) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}`,
+          }}
+        />
         {/* Mesma fonte de ícones usada nos templates exportados */}
         <link
           rel="stylesheet"
@@ -37,7 +47,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

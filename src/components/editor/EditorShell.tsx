@@ -17,6 +17,11 @@ import {
 } from "@/lib/export";
 import { useAuth } from "@/lib/auth-context";
 import { TEMPLATES, getTemplate } from "@/templates/registry";
+import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/Confirm";
+import { Button } from "@/components/ui/Button";
+import { Select, FieldLabel } from "@/components/ui/Field";
+import { Segmented } from "@/components/ui/Segmented";
 import { PreviewFrame } from "@/components/editor/PreviewFrame";
 import { ClientForm } from "@/components/editor/ClientForm";
 import { ContactForm } from "@/components/editor/ContactForm";
@@ -41,6 +46,8 @@ export interface SectionProps {
 
 export function EditorShell({ initial }: { initial: LinktreeDoc }) {
   const { user } = useAuth();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
   const userEmail = user?.email ?? "";
   const [docState, setDocState] = useState<LinktreeDoc>(initial);
   const [saveState, setSaveState] = useState<SaveState>("salvo");
@@ -157,24 +164,26 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     onChange({ templateId: template.id, palette: template.defaultPalette });
   }
 
-  function validateForExport(): boolean {
+  async function validateForExport(): Promise<boolean> {
     const blockers = exportBlockers(docState);
     if (blockers.length > 0) {
-      alert(`Antes de publicar, preencha: ${blockers.join(", ")}.`);
+      toast(`Antes de publicar, preencha: ${blockers.join(", ")}.`, "err");
       return false;
     }
     // Avisos não impedem o export — o gestor decide se segue mesmo assim.
     const warnings = exportWarnings(docState);
     if (warnings.length > 0) {
-      return confirm(
-        `Atenção:\n• ${warnings.join("\n• ")}\n\nExportar mesmo assim?`
-      );
+      return confirmDialog({
+        title: "Exportar mesmo assim?",
+        message: `• ${warnings.join("\n• ")}`,
+        confirmLabel: "Exportar",
+      });
     }
     return true;
   }
 
   async function handleExportZip() {
-    if (!validateForExport()) return;
+    if (!(await validateForExport())) return;
     await exportLinktreeZip(docState);
     // Salva pendências ANTES do carimbo: o updatedAt fica atrás do
     // lastExportedAt e o aviso "alterações não exportadas" não dispara à toa.
@@ -186,18 +195,20 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
       status: "publicado",
       lastExportedAt: Timestamp.now(),
     }));
+    toast("ZIP exportado — pronto para subir na hospedagem.");
   }
 
   async function handleCopyHtml() {
-    if (!validateForExport()) return;
+    if (!(await validateForExport())) return;
     await copyLinktreeHtml(docState);
-    alert("HTML copiado para a área de transferência!");
+    toast("HTML copiado para a área de transferência.");
   }
 
   function handleShowQr() {
     if (!docState.publishedUrl.trim()) {
-      alert(
-        'Preencha a "URL publicada" na seção Publicação e contato para gerar o QR code.'
+      toast(
+        'Preencha a "URL publicada" na seção Publicação e contato para gerar o QR code.',
+        "err"
       );
       return;
     }
@@ -207,73 +218,79 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/painel"
-            className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
+            className="glass pressable inline-flex items-center gap-1.5 rounded-full border border-hair bg-field px-3.5 py-1.5 text-sm hover:bg-hover"
           >
-            ← Painel
+            <i className="ti ti-arrow-left" />
+            Painel
           </Link>
-          <h1 className="text-xl font-bold">{docState.clientName}</h1>
+          <h1 className="truncate text-xl font-semibold tracking-tight">
+            {docState.clientName}
+          </h1>
         </div>
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status de save: mono + ponto colorido (pos/muted/neg) */}
           <span
-            className={
+            className={`mr-1 flex items-center gap-1.5 font-mono text-xs ${
               saveState === "erro"
-                ? "text-red-400"
+                ? "text-neg"
                 : saveState === "salvando"
                   ? "text-muted"
-                  : "text-green-500"
-            }
+                  : "text-pos"
+            }`}
           >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                saveState === "erro"
+                  ? "bg-neg"
+                  : saveState === "salvando"
+                    ? "bg-muted"
+                    : "bg-pos"
+              }`}
+            />
             {saveState === "erro"
-              ? "Erro ao salvar — tentando de novo na próxima edição"
+              ? "erro ao salvar"
               : saveState === "salvando"
-                ? "Salvando…"
-                : "Salvo"}
+                ? "salvando…"
+                : "salvo"}
           </span>
-          <select
+          <Select
             value={docState.templateId}
             onChange={(event) => handleTemplateChange(event.target.value)}
-            className="rounded-md border border-border bg-surface px-2 py-1.5"
+            className="w-auto"
           >
             {Object.values(TEMPLATES).map((template) => (
               <option key={template.id} value={template.id}>
                 {template.name}
               </option>
             ))}
-          </select>
-          <button
+          </Select>
+          <Button
+            variant="icon"
             onClick={handleUndo}
             disabled={historyCount === 0}
             title="Desfazer (Ctrl+Z)"
-            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border"
           >
             <i className="ti ti-arrow-back-up" />
-            Desfazer
-          </button>
-          <button
-            onClick={handleShowQr}
-            className="rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent"
-          >
-            QR Code
-          </button>
-          <button
-            onClick={handleCopyHtml}
-            className="rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent"
-          >
+          </Button>
+          <Button onClick={handleShowQr}>
+            <i className="ti ti-qrcode" />
+            QR code
+          </Button>
+          <Button onClick={handleCopyHtml}>
+            <i className="ti ti-copy" />
             Copiar HTML
-          </button>
-          <button
-            onClick={handleExportZip}
-            className="rounded-md bg-accent px-3 py-1.5 font-medium text-black transition-colors hover:bg-accent-hover"
-          >
+          </Button>
+          <Button variant="primary" onClick={handleExportZip}>
+            <i className="ti ti-download" />
             Baixar site (.zip)
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_420px]">
         <div className="flex min-w-0 flex-col gap-8">
           <ClientForm value={docState} onChange={onChange} />
           <ContactForm value={docState} onChange={onChange} />
@@ -284,44 +301,37 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
         </div>
 
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-sm text-muted">
-              Preview — exatamente o que será publicado
-            </p>
-            <div className="flex items-center gap-1">
-              {(
-                [
-                  { mode: "mobile", icon: "device-mobile", title: "Celular (375px)" },
-                  { mode: "desktop", icon: "device-desktop", title: "Desktop" },
-                ] as const
-              ).map(({ mode, icon, title }) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setPreviewMode(mode)}
-                  title={title}
-                  className={`flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
-                    previewMode === mode
-                      ? "border-accent text-accent"
-                      : "border-border text-muted hover:border-accent"
-                  }`}
-                >
-                  <i className={`ti ti-${icon}`} />
-                </button>
-              ))}
-            </div>
+          <div className="mb-2.5 flex items-center justify-between gap-2">
+            <FieldLabel>Preview — igual ao publicado</FieldLabel>
+            <Segmented
+              value={previewMode}
+              onChange={setPreviewMode}
+              options={[
+                {
+                  value: "mobile",
+                  icon: "device-mobile",
+                  title: "Celular (375px)",
+                },
+                { value: "desktop", icon: "device-desktop", title: "Desktop" },
+              ]}
+            />
           </div>
-          <div
-            className={
-              previewMode === "mobile" ? "mx-auto w-[375px] max-w-full" : ""
-            }
-          >
+          {previewMode === "mobile" ? (
+            /* Moldura de celular: bezel escuro fixo, independente do tema */
+            <div className="mx-auto w-[375px] max-w-full overflow-hidden rounded-[38px] border-[10px] border-[#211f1d] bg-[#211f1d] shadow-big">
+              <PreviewFrame
+                config={docState}
+                photoSrc={docState.photoUrl}
+                className="block h-[680px] w-full rounded-[28px] bg-white"
+              />
+            </div>
+          ) : (
             <PreviewFrame
               config={docState}
               photoSrc={docState.photoUrl}
-              className="h-[700px] w-full rounded-xl border border-border bg-white"
+              className="h-[700px] w-full rounded-xl border border-hair bg-white shadow-card"
             />
-          </div>
+          )}
         </div>
       </div>
 

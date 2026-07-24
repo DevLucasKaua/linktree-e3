@@ -3,6 +3,9 @@
 import type { LinkItem, UtmParams } from "@/templates/types";
 import { IconPicker } from "@/components/editor/IconPicker";
 import { isValidHttpUrl, youtubeVideoId } from "@/lib/utils";
+import { Input, Textarea } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 /** Campos UTM exibidos no bloco expansível. */
 const UTM_FIELDS: { key: keyof UtmParams; label: string }[] = [
@@ -19,6 +22,9 @@ const TYPE_NAMES = {
   whatsapp: "WhatsApp",
   youtube: "Vídeo",
 } as const;
+
+const DETAILS_SUMMARY_CLASS =
+  "cursor-pointer select-none text-muted transition-colors hover:text-ink";
 
 export function LinkItemForm({
   link,
@@ -65,7 +71,7 @@ export function LinkItemForm({
       onDragEnter={onDragEnter}
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => event.preventDefault()}
-      className={`flex flex-col gap-3 rounded-lg border border-border p-4 ${
+      className={`flex flex-col gap-3 rounded-lg border border-hair p-4 transition-opacity ${
         link.active ? "" : "opacity-60"
       }`}
     >
@@ -76,7 +82,7 @@ export function LinkItemForm({
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
           title="Arrastar para reordenar"
-          className="flex h-9 w-5 shrink-0 cursor-grab items-center justify-center text-muted active:cursor-grabbing"
+          className="flex h-8 w-5 shrink-0 cursor-grab items-center justify-center text-muted active:cursor-grabbing"
         >
           <i className="ti ti-grip-vertical" />
         </span>
@@ -86,58 +92,41 @@ export function LinkItemForm({
             onSelect={(icon) => onUpdate({ icon })}
           />
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-lg text-muted">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-hair bg-field text-muted">
             <i className={`ti ti-${link.icon}`} />
           </div>
         )}
-        <input
-          type="text"
+        <Input
           value={link.label}
           onChange={(event) => onUpdate({ label: event.target.value })}
           placeholder="Título"
           aria-label="Título"
-          className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+          className="flex-1 py-1.5"
         />
-        {type !== "link" && (
-          <span className="shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-muted">
-            {TYPE_NAMES[type]}
-          </span>
-        )}
+        {type !== "link" && <Badge>{TYPE_NAMES[type]}</Badge>}
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
+          <Button
+            variant="icon"
             onClick={() => onMove(-1)}
             disabled={index === 0}
             title="Mover para cima"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border"
           >
             <i className="ti ti-arrow-up" />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="icon"
             onClick={() => onMove(1)}
             disabled={index === total - 1}
             title="Mover para baixo"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border"
           >
             <i className="ti ti-arrow-down" />
-          </button>
-          <button
-            type="button"
-            onClick={onDuplicate}
-            title="Duplicar bloco"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:border-accent"
-          >
+          </Button>
+          <Button variant="icon" onClick={onDuplicate} title="Duplicar bloco">
             <i className="ti ti-copy" />
-          </button>
-          <button
-            type="button"
-            onClick={onRemove}
-            title="Excluir bloco"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-red-400 transition-colors hover:border-red-400"
-          >
+          </Button>
+          <Button variant="iconDanger" onClick={onRemove} title="Excluir bloco">
             <i className="ti ti-trash" />
-          </button>
+          </Button>
           <label
             className="ml-1 flex cursor-pointer items-center gap-1.5 text-sm text-muted"
             title="Exibir ou ocultar o bloco na página"
@@ -155,32 +144,28 @@ export function LinkItemForm({
 
       {/* Cabeçalho só tem título; os demais tipos têm campos próprios */}
       {type === "link" && (
-        <input
-          type="text"
+        <Input
           value={link.description ?? ""}
           onChange={(event) => onUpdate({ description: event.target.value })}
           placeholder="Descrição (opcional)"
           aria-label="Descrição (opcional)"
-          className="rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+          className="py-1.5"
         />
       )}
 
       {type === "link" && (
         <>
-          <input
+          <Input
             type="url"
+            invalid={urlInvalid}
             value={link.url}
             onChange={(event) => onUpdate({ url: event.target.value })}
             placeholder="https://..."
             aria-label="URL"
-            className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
-              urlInvalid
-                ? "border-red-400 focus:border-red-400"
-                : "border-border focus:border-accent"
-            }`}
+            className="py-1.5"
           />
           {urlInvalid && (
-            <span className="text-xs text-red-400">
+            <span className="text-xs text-neg">
               URL inválida — precisa começar com https:// (ou http://).
             </span>
           )}
@@ -189,51 +174,45 @@ export function LinkItemForm({
 
       {type === "whatsapp" && (
         <>
-          <input
+          <Input
             type="tel"
+            invalid={phoneInvalid}
             value={link.url}
             onChange={(event) => onUpdate({ url: event.target.value })}
             placeholder="Número com DDI — ex: +55 11 99999-9999"
             aria-label="Número do WhatsApp"
-            className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
-              phoneInvalid
-                ? "border-red-400 focus:border-red-400"
-                : "border-border focus:border-accent"
-            }`}
+            className="py-1.5"
           />
           {phoneInvalid && (
-            <span className="text-xs text-red-400">
+            <span className="text-xs text-neg">
               Número incompleto — use DDI + DDD + número (ex: +55 11
               99999-9999).
             </span>
           )}
-          <textarea
+          <Textarea
             rows={2}
             value={link.message ?? ""}
             onChange={(event) => onUpdate({ message: event.target.value })}
             placeholder="Mensagem pré-preenchida (opcional) — ex: Olá! Gostaria de agendar uma consulta."
             aria-label="Mensagem pré-preenchida"
-            className="resize-none rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+            className="py-1.5"
           />
         </>
       )}
 
       {type === "youtube" && (
         <>
-          <input
+          <Input
             type="url"
+            invalid={videoInvalid}
             value={link.url}
             onChange={(event) => onUpdate({ url: event.target.value })}
             placeholder="https://youtube.com/watch?v=..."
             aria-label="URL do vídeo"
-            className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
-              videoInvalid
-                ? "border-red-400 focus:border-red-400"
-                : "border-border focus:border-accent"
-            }`}
+            className="py-1.5"
           />
           {videoInvalid && (
-            <span className="text-xs text-red-400">
+            <span className="text-xs text-warn">
               URL de vídeo não reconhecida — na página, será exibido como botão
               comum em vez de cartão com thumbnail.
             </span>
@@ -243,33 +222,37 @@ export function LinkItemForm({
 
       {/* Agendamento: janela de exibição do bloco na página */}
       <details className="text-sm" open={Boolean(link.startAt || link.endAt)}>
-        <summary className="cursor-pointer select-none text-muted transition-colors hover:text-accent">
+        <summary className={DETAILS_SUMMARY_CLASS}>
           Agendamento
           {(link.startAt || link.endAt) && (
-            <span className="ml-2 text-xs text-accent">ativo</span>
+            <span className="ml-2 font-mono text-xs text-accent">ativo</span>
           )}
         </summary>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-muted">Exibir a partir de</span>
-            <input
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-soft">
+              Exibir a partir de
+            </span>
+            <Input
               type="date"
               value={link.startAt ?? ""}
               onChange={(event) =>
                 onUpdate({ startAt: event.target.value || undefined })
               }
-              className="rounded-md border border-border bg-transparent px-2 py-1 text-sm outline-none transition-colors focus:border-accent"
+              className="py-1.5"
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-muted">Exibir até (inclusive)</span>
-            <input
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-soft">
+              Exibir até (inclusive)
+            </span>
+            <Input
               type="date"
               value={link.endAt ?? ""}
               onChange={(event) =>
                 onUpdate({ endAt: event.target.value || undefined })
               }
-              className="rounded-md border border-border bg-transparent px-2 py-1 text-sm outline-none transition-colors focus:border-accent"
+              className="py-1.5"
             />
           </label>
         </div>
@@ -297,19 +280,18 @@ export function LinkItemForm({
 
       {type === "link" && (
         <details className="text-sm">
-          <summary className="cursor-pointer select-none text-muted transition-colors hover:text-accent">
-            Parâmetros UTM
-          </summary>
+          <summary className={DETAILS_SUMMARY_CLASS}>Parâmetros UTM</summary>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {UTM_FIELDS.map(({ key, label }) => (
               <label key={key} className="flex flex-col gap-1">
-                <span className="text-xs text-muted">{label}</span>
-                <input
-                  type="text"
+                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-soft">
+                  {label}
+                </span>
+                <Input
                   value={link.utm?.[key] ?? ""}
                   onChange={(event) => updateUtm(key, event.target.value)}
                   placeholder={`utm_${label}`}
-                  className="rounded-md border border-border bg-transparent px-2 py-1 text-sm outline-none transition-colors focus:border-accent"
+                  className="px-2 py-1"
                 />
               </label>
             ))}
