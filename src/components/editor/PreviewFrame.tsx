@@ -3,6 +3,7 @@
 import { useMemo, type CSSProperties } from "react";
 import type { LinktreeConfig } from "@/templates/types";
 import { buildLinktreeHtml } from "@/templates/render";
+import { vcardDataUri } from "@/lib/vcard";
 
 interface PreviewFrameProps {
   config: LinktreeConfig;
@@ -19,7 +20,12 @@ export function PreviewFrame({
   style,
 }: PreviewFrameProps) {
   const html = useMemo(
-    () => buildLinktreeHtml(config, { photoSrc }),
+    () =>
+      buildLinktreeHtml(config, {
+        photoSrc,
+        // Data URI para o botão "Salvar contato" aparecer também no preview.
+        vcardSrc: vcardDataUri(config, photoSrc ?? null),
+      }),
     [config, photoSrc]
   );
 

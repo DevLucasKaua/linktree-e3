@@ -2,7 +2,7 @@ import type { TemplateProps } from "@/templates/types";
 import { buildUrlWithUtms, initials } from "@/lib/utils";
 
 /** Template Gradiente: fundo em gradiente escuro com cartões de vidro (glassmorphism). */
-export function Template({ config, photoSrc }: TemplateProps) {
+export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
   const activeLinks = config.links.filter((link) => link.active);
 
   return (
@@ -47,6 +47,14 @@ export function Template({ config, photoSrc }: TemplateProps) {
           </a>
         ))}
       </nav>
+
+      {/* Botão de download do vCard */}
+      {vcardSrc && (
+        <a className="glass-contact" href={vcardSrc} download="contato.vcf">
+          <i className="ti ti-user-plus" />
+          Salvar contato
+        </a>
+      )}
 
       <div className="glass-divider" />
       <footer className="glass-footer">

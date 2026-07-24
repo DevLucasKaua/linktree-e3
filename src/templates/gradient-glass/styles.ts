@@ -22,6 +22,9 @@ body{background:linear-gradient(160deg, ${p.bg} 0%, color-mix(in srgb, ${p.prima
 .card-label{font-size:15px;font-weight:600;color:${p.text}}
 .card-desc{font-size:12px;color:${p.muted};margin-top:2px}
 .card-arrow{color:${p.muted};font-size:18px}
+.glass-contact{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;border:1px solid ${p.border};background:color-mix(in srgb, ${p.surface} 8%, transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:${p.muted};font-size:13px;text-decoration:none;transition:background .15s,color .15s}
+.glass-contact:hover{background:color-mix(in srgb, ${p.surface} 14%, transparent);color:${p.text}}
+.glass-contact i{font-size:16px}
 .glass-divider{width:100%;height:1px;background:color-mix(in srgb, ${p.text} 12%, transparent)}
 .glass-footer{font-size:11px;color:color-mix(in srgb, ${p.text} 40%, transparent)}
 `.trim();

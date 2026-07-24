@@ -54,6 +54,12 @@ export const SAMPLE_CONFIG: Omit<LinktreeConfig, "templateId" | "palette"> = {
   clientName: "Dra. Ana Beatriz Rocha",
   slug: "ana-beatriz-rocha",
   bio: "Advocacia previdenciária e trabalhista. Atendimento em todo o Brasil.",
+  publishedUrl: "https://exemplo.adv.br/links",
+  contact: {
+    phone: "+55 11 99999-9999",
+    email: "contato@exemplo.adv.br",
+    org: "Rocha Advocacia",
+  },
   links: [
     {
       id: "sample-1",

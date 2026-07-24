@@ -2,7 +2,7 @@ import type { TemplateProps } from "@/templates/types";
 import { buildUrlWithUtms, initials } from "@/lib/utils";
 
 /** Template Jurídico Serif: claro e formal, serifa com detalhes dourados. */
-export function Template({ config, photoSrc }: TemplateProps) {
+export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
   const activeLinks = config.links.filter((link) => link.active);
 
   return (
@@ -46,6 +46,14 @@ export function Template({ config, photoSrc }: TemplateProps) {
           </a>
         ))}
       </nav>
+
+      {/* Botão de download do vCard */}
+      {vcardSrc && (
+        <a className="salvar-contato" href={vcardSrc} download="contato.vcf">
+          <i className="ti ti-user-plus" />
+          Salvar contato
+        </a>
+      )}
 
       {/* Rodapé */}
       <div className="divisor" />

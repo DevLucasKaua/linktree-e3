@@ -14,6 +14,16 @@ export function buildUrlWithUtms(url: string, utm?: UtmParams): string {
   }
 }
 
+/** true se a URL é http(s) válida (validação dos campos de URL do editor). */
+export function isValidHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

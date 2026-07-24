@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { isSlugTaken, type LinktreeUpdate } from "@/lib/linktrees";
 import { photoToDataUri } from "@/lib/photo";
@@ -19,10 +19,13 @@ export function ClientForm({ value, onChange }: SectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Mantém o rascunho em sincronia quando o slug muda por fora
-  // (ex: atualização automática ao digitar o nome).
-  useEffect(() => {
+  // (ex: atualização automática ao digitar o nome) — ajuste durante o
+  // render, sem efeito, conforme react.dev/learn/you-might-not-need-an-effect.
+  const [prevSlug, setPrevSlug] = useState(value.slug);
+  if (prevSlug !== value.slug) {
+    setPrevSlug(value.slug);
     setSlugDraft(value.slug);
-  }, [value.slug]);
+  }
 
   function handleNameChange(newName: string) {
     const changes: LinktreeUpdate = { clientName: newName };
