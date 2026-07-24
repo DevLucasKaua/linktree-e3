@@ -1,8 +1,36 @@
 "use client";
 
-import type { LinkItem } from "@/templates/types";
+import type { LinkItem, LinkItemType } from "@/templates/types";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { LinkItemForm } from "@/components/editor/LinkItemForm";
+
+/** Padrões de cada tipo de bloco no menu de adicionar. */
+const ADD_OPTIONS: {
+  type: LinkItemType;
+  buttonLabel: string;
+  defaults: Pick<LinkItem, "label" | "icon">;
+}[] = [
+  {
+    type: "link",
+    buttonLabel: "+ Link",
+    defaults: { label: "Novo link", icon: "link" },
+  },
+  {
+    type: "header",
+    buttonLabel: "+ Cabeçalho",
+    defaults: { label: "Nova seção", icon: "heading" },
+  },
+  {
+    type: "whatsapp",
+    buttonLabel: "+ WhatsApp",
+    defaults: { label: "Fale no WhatsApp", icon: "brand-whatsapp" },
+  },
+  {
+    type: "youtube",
+    buttonLabel: "+ Vídeo",
+    defaults: { label: "Assista no YouTube", icon: "brand-youtube" },
+  },
+];
 
 export function LinksEditor({ value, onChange }: SectionProps) {
   const links = value.links;
@@ -12,14 +40,14 @@ export function LinksEditor({ value, onChange }: SectionProps) {
     onChange({ links: nextLinks });
   }
 
-  function handleAdd() {
+  function handleAdd(type: LinkItemType, defaults: Pick<LinkItem, "label" | "icon">) {
     commit([
       ...links,
       {
         id: crypto.randomUUID(),
-        label: "Novo link",
+        type,
+        ...defaults,
         description: "",
-        icon: "link",
         url: "",
         active: true,
       },
@@ -53,11 +81,11 @@ export function LinksEditor({ value, onChange }: SectionProps) {
 
   return (
     <section className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
-      <h2 className="font-semibold">Links</h2>
+      <h2 className="font-semibold">Links e blocos</h2>
 
       {links.length === 0 ? (
         <p className="text-sm text-muted">
-          Nenhum link ainda — adicione o primeiro.
+          Nenhum bloco ainda — adicione o primeiro.
         </p>
       ) : (
         <div className="flex flex-col gap-3">
@@ -76,13 +104,18 @@ export function LinksEditor({ value, onChange }: SectionProps) {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleAdd}
-        className="self-start rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
-      >
-        + Adicionar link
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        {ADD_OPTIONS.map(({ type, buttonLabel, defaults }) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => handleAdd(type, defaults)}
+            className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
+          >
+            {buttonLabel}
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

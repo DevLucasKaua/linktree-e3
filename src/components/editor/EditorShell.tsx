@@ -17,6 +17,7 @@ import { TEMPLATES, getTemplate } from "@/templates/registry";
 import { PreviewFrame } from "@/components/editor/PreviewFrame";
 import { ClientForm } from "@/components/editor/ClientForm";
 import { ContactForm } from "@/components/editor/ContactForm";
+import { SocialsEditor } from "@/components/editor/SocialsEditor";
 import { PaletteEditor } from "@/components/editor/PaletteEditor";
 import { LinksEditor } from "@/components/editor/LinksEditor";
 import { QrCodeModal } from "@/components/QrCodeModal";
@@ -179,6 +180,7 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
         <div className="flex min-w-0 flex-col gap-8">
           <ClientForm value={docState} onChange={onChange} />
           <ContactForm value={docState} onChange={onChange} />
+          <SocialsEditor value={docState} onChange={onChange} />
           <PaletteEditor value={docState} onChange={onChange} />
           <LinksEditor value={docState} onChange={onChange} />
         </div>
