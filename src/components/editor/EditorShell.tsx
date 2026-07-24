@@ -221,7 +221,7 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/painel"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-hair bg-surface px-3 py-1.5 text-sm transition-colors hover:border-muted"
+            className="glass pressable inline-flex items-center gap-1.5 rounded-full border border-hair bg-field px-3.5 py-1.5 text-sm hover:bg-hover"
           >
             <i className="ti ti-arrow-left" />
             Painel

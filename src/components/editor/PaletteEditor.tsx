@@ -72,7 +72,7 @@ export function PaletteEditor({ value, onChange }: SectionProps) {
                     type="color"
                     value={colorValue}
                     onChange={(event) => setColor(key, event.target.value)}
-                    className="h-9 w-12 cursor-pointer rounded-lg border border-hair bg-bg p-1"
+                    className="h-9 w-12 cursor-pointer rounded-[10px] border border-hair bg-field p-1"
                   />
                   <span className="font-mono text-sm text-muted">
                     {colorValue}

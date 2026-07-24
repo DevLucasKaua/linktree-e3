@@ -5,10 +5,12 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 
-/** Controle de formulário unificado (um só fundo, hairline, foco no acento). */
+/** Controle de formulário unificado (glass, hairline, foco no acento com glow). */
 export function controlClass(invalid = false): string {
-  return `w-full rounded-lg border bg-bg px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted ${
-    invalid ? "border-neg focus:border-neg" : "border-hair focus:border-accent"
+  return `w-full rounded-[10px] border bg-field px-3 py-2 text-sm text-ink outline-none transition-[border-color,box-shadow] placeholder:text-muted ${
+    invalid
+      ? "border-neg focus:border-neg"
+      : "border-hair focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)]"
   }`;
 }
 

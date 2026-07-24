@@ -92,7 +92,7 @@ export function LinkItemForm({
             onSelect={(icon) => onUpdate({ icon })}
           />
         ) : (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-hair bg-surface text-muted">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-hair bg-field text-muted">
             <i className={`ti ti-${link.icon}`} />
           </div>
         )}

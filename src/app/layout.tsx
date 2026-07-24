@@ -29,15 +29,15 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      data-theme="light"
+      data-theme="dark"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        {/* Aplica o tema salvo ANTES do primeiro paint (evita flash claro→escuro) */}
+        {/* Aplica o tema salvo ANTES do primeiro paint (dark é o padrão) */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}`,
+            __html: `try{if(localStorage.getItem("theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}`,
           }}
         />
         {/* Mesma fonte de ícones usada nos templates exportados */}

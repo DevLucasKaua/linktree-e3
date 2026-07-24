@@ -37,7 +37,7 @@ export function Menu({
         title={label}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-hover hover:text-ink ${
+        className={`pressable flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-hover hover:text-ink ${
           open ? "bg-hover text-ink" : "text-muted"
         }`}
       >
@@ -52,7 +52,7 @@ export function Menu({
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <div className="absolute right-0 top-full z-50 mt-1 flex min-w-[190px] origin-top-right animate-menu-in flex-col rounded-xl border border-hair bg-surface p-1 shadow-big">
+          <div className="glass-strong absolute right-0 top-full z-50 mt-1 flex min-w-[190px] origin-top-right animate-menu-in flex-col rounded-xl border border-hair bg-surface p-1 shadow-big">
             {items.map((item) => (
               <button
                 key={item.label}
