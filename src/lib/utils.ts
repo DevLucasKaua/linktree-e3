@@ -51,6 +51,38 @@ export function linkItemHref(item: LinkItem): string {
   return buildUrlWithUtms(item.url, item.utm);
 }
 
+/** Formatos aceitos dos IDs de rastreamento (editor valida, render só injeta se casar). */
+export const TRACKING_PATTERNS = {
+  ga4Id: /^G-[A-Z0-9]{4,}$/i,
+  metaPixelId: /^\d{5,20}$/,
+  gtmId: /^GTM-[A-Z0-9]{4,}$/i,
+} as const;
+
+/** true se o bloco está dentro da janela de agendamento no instante `now`. */
+export function isWithinSchedule(item: LinkItem, now: Date): boolean {
+  if (item.startAt && now < new Date(`${item.startAt}T00:00:00`)) return false;
+  if (item.endAt && now > new Date(`${item.endAt}T23:59:59`)) return false;
+  return true;
+}
+
+/**
+ * Atributos de agendamento do bloco: data-start/data-end para o script da
+ * página e `hidden` refletindo o estado no momento da renderização (o script
+ * corrige na abertura — a página estática pode ficar dias no ar).
+ */
+export function scheduleAttrs(item: LinkItem): {
+  "data-start"?: string;
+  "data-end"?: string;
+  hidden?: boolean;
+} {
+  if (!item.startAt && !item.endAt) return {};
+  return {
+    ...(item.startAt ? { "data-start": item.startAt } : {}),
+    ...(item.endAt ? { "data-end": item.endAt } : {}),
+    ...(isWithinSchedule(item, new Date()) ? {} : { hidden: true }),
+  };
+}
+
 /** true se a URL é http(s) válida (validação dos campos de URL do editor). */
 export function isValidHttpUrl(url: string): boolean {
   try {

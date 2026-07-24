@@ -9,7 +9,11 @@ import {
   updateLinktree,
   type LinktreeDoc,
 } from "@/lib/linktrees";
-import { exportBlockers, exportLinktreeZip } from "@/lib/export";
+import {
+  exportBlockers,
+  exportLinktreeZip,
+  exportWarnings,
+} from "@/lib/export";
 import { useAuth } from "@/lib/auth-context";
 import { getTemplate } from "@/templates/registry";
 import { initials } from "@/lib/utils";
@@ -28,6 +32,13 @@ export default function PainelPage() {
     const blockers = exportBlockers(linktree);
     if (blockers.length > 0) {
       alert(`Antes de publicar, edite e preencha: ${blockers.join(", ")}.`);
+      return;
+    }
+    const warnings = exportWarnings(linktree);
+    if (
+      warnings.length > 0 &&
+      !confirm(`Atenção:\n• ${warnings.join("\n• ")}\n\nExportar mesmo assim?`)
+    ) {
       return;
     }
     await exportLinktreeZip(linktree);

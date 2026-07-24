@@ -1,5 +1,5 @@
 import type { TemplateProps } from "@/templates/types";
-import { initials, linkItemHref, youtubeVideoId } from "@/lib/utils";
+import { initials, linkItemHref, scheduleAttrs, youtubeVideoId } from "@/lib/utils";
 
 /** Template Minimal: card branco central sobre fundo neutro, botões sólidos. */
 export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
@@ -47,7 +47,11 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
 
             if (type === "header") {
               return (
-                <div key={item.id} className="secao-titulo">
+                <div
+                  key={item.id}
+                  className="secao-titulo"
+                  {...scheduleAttrs(item)}
+                >
                   {item.label}
                 </div>
               );
@@ -63,6 +67,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
                   href={item.url}
                   target="_blank"
                   rel="noopener"
+                  {...scheduleAttrs(item)}
                 >
                   <img
                     className="video-capa"
@@ -84,6 +89,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
                 href={linkItemHref(item)}
                 target="_blank"
                 rel="noopener"
+                {...scheduleAttrs(item)}
               >
                 <i className={`ti ti-${item.icon} botao-icone`} />
                 <span className="botao-texto">

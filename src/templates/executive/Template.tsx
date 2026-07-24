@@ -1,5 +1,5 @@
 import type { TemplateProps } from "@/templates/types";
-import { initials, linkItemHref, youtubeVideoId } from "@/lib/utils";
+import { initials, linkItemHref, scheduleAttrs, youtubeVideoId } from "@/lib/utils";
 
 /** Template Executivo: navy profundo, detalhes dourados e foto quadrada em moldura. */
 export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
@@ -49,7 +49,11 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
 
           if (type === "header") {
             return (
-              <div key={item.id} className="exec-section">
+              <div
+                key={item.id}
+                className="exec-section"
+                {...scheduleAttrs(item)}
+              >
                 {item.label}
               </div>
             );
@@ -65,6 +69,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
                 href={item.url}
                 target="_blank"
                 rel="noopener"
+                {...scheduleAttrs(item)}
               >
                 <img
                   className="exec-video-thumb"
@@ -86,6 +91,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
               href={linkItemHref(item)}
               target="_blank"
               rel="noopener"
+              {...scheduleAttrs(item)}
             >
               <span className="exec-icon">
                 <i className={`ti ti-${item.icon}`} />

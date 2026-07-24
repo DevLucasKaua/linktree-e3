@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import type { LinktreeConfig } from "./types";
+import type { LinktreeConfig, TrackingInfo } from "./types";
 import { getTemplate } from "./registry";
+import { TRACKING_PATTERNS } from "@/lib/utils";
 
 /** Versão fixada do CDN de ícones para estabilidade visual do export. */
 const TABLER_ICONS_CDN =
@@ -41,6 +42,17 @@ export function buildLinktreeHtml(
   const photoAbsUrl =
     publishedUrl && opts.photoSrc ? `${publishedUrl}/foto.jpg` : "";
 
+  const tracking = buildTrackingSnippets(config.tracking);
+
+  // Script só entra quando algum bloco ativo tem janela de agendamento:
+  // a página estática pode ficar dias no ar, então o estado é recalculado a cada abertura.
+  const hasSchedule = config.links.some(
+    (link) => link.active && (link.startAt || link.endAt)
+  );
+  const scheduleScript = hasSchedule
+    ? `<script>(function(){var now=new Date();document.querySelectorAll("[data-start],[data-end]").forEach(function(el){var s=el.getAttribute("data-start");var e=el.getAttribute("data-end");el.hidden=Boolean((s&&now<new Date(s+"T00:00:00"))||(e&&now>new Date(e+"T23:59:59")));});})();</script>\n`
+    : "";
+
   const headExtras = [
     publishedUrl &&
       `<meta property="og:url" content="${escapeHtml(publishedUrl)}">`,
@@ -54,6 +66,7 @@ export function buildLinktreeHtml(
     opts.appleIconSrc &&
       `<link rel="apple-touch-icon" sizes="180x180" href="${escapeHtml(opts.appleIconSrc)}">`,
     `<script type="application/ld+json">${buildJsonLd(config, publishedUrl, photoAbsUrl)}</script>`,
+    tracking.head,
   ]
     .filter(Boolean)
     .join("\n");
@@ -75,10 +88,48 @@ ${template.css(config.palette)}
 </style>
 </head>
 <body>
-${body}
-</body>
+${tracking.bodyStart}${body}
+${scheduleScript}</body>
 </html>
 `;
+}
+
+/**
+ * Snippets oficiais de rastreamento. IDs só entram se casarem com o formato
+ * esperado (TRACKING_PATTERNS) — o que também os torna seguros para interpolar.
+ */
+function buildTrackingSnippets(tracking: TrackingInfo): {
+  head: string;
+  bodyStart: string;
+} {
+  const head: string[] = [];
+  const bodyStart: string[] = [];
+
+  const gtm = tracking.gtmId.trim().toUpperCase();
+  if (TRACKING_PATTERNS.gtmId.test(gtm)) {
+    head.push(
+      `<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtm}');</script>`
+    );
+    bodyStart.push(
+      `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${gtm}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>\n`
+    );
+  }
+
+  const ga4 = tracking.ga4Id.trim().toUpperCase();
+  if (TRACKING_PATTERNS.ga4Id.test(ga4)) {
+    head.push(
+      `<script async src="https://www.googletagmanager.com/gtag/js?id=${ga4}"></script>\n<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${ga4}');</script>`
+    );
+  }
+
+  const pixel = tracking.metaPixelId.trim();
+  if (TRACKING_PATTERNS.metaPixelId.test(pixel)) {
+    head.push(
+      `<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixel}');fbq('track','PageView');</script><noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${pixel}&ev=PageView&noscript=1"/></noscript>`
+    );
+  }
+
+  return { head: head.join("\n"), bodyStart: bodyStart.join("") };
 }
 
 /** Dados estruturados (schema.org) do cliente para buscadores. */

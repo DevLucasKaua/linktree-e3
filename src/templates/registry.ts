@@ -60,6 +60,7 @@ export const SAMPLE_CONFIG: Omit<LinktreeConfig, "templateId" | "palette"> = {
     email: "contato@exemplo.adv.br",
     org: "Rocha Advocacia",
   },
+  tracking: { ga4Id: "", metaPixelId: "", gtmId: "" },
   socials: [
     {
       id: "sample-social-1",

@@ -11,6 +11,7 @@ import {
   copyLinktreeHtml,
   exportBlockers,
   exportLinktreeZip,
+  exportWarnings,
 } from "@/lib/export";
 import { useAuth } from "@/lib/auth-context";
 import { TEMPLATES, getTemplate } from "@/templates/registry";
@@ -18,6 +19,7 @@ import { PreviewFrame } from "@/components/editor/PreviewFrame";
 import { ClientForm } from "@/components/editor/ClientForm";
 import { ContactForm } from "@/components/editor/ContactForm";
 import { SocialsEditor } from "@/components/editor/SocialsEditor";
+import { TrackingForm } from "@/components/editor/TrackingForm";
 import { PaletteEditor } from "@/components/editor/PaletteEditor";
 import { LinksEditor } from "@/components/editor/LinksEditor";
 import { QrCodeModal } from "@/components/QrCodeModal";
@@ -89,6 +91,13 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     if (blockers.length > 0) {
       alert(`Antes de publicar, preencha: ${blockers.join(", ")}.`);
       return false;
+    }
+    // Avisos não impedem o export — o gestor decide se segue mesmo assim.
+    const warnings = exportWarnings(docState);
+    if (warnings.length > 0) {
+      return confirm(
+        `Atenção:\n• ${warnings.join("\n• ")}\n\nExportar mesmo assim?`
+      );
     }
     return true;
   }
@@ -181,6 +190,7 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
           <ClientForm value={docState} onChange={onChange} />
           <ContactForm value={docState} onChange={onChange} />
           <SocialsEditor value={docState} onChange={onChange} />
+          <TrackingForm value={docState} onChange={onChange} />
           <PaletteEditor value={docState} onChange={onChange} />
           <LinksEditor value={docState} onChange={onChange} />
         </div>

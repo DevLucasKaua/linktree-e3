@@ -26,6 +26,10 @@ export interface LinkItem {
   active: boolean;
   /** Destaque visual: borda no acento + selo de estrela + pulso sutil. */
   highlight?: boolean;
+  /** Agendamento: exibir a partir desta data (ISO "AAAA-MM-DD", inclusive). */
+  startAt?: string;
+  /** Agendamento: exibir até esta data (ISO "AAAA-MM-DD", inclusive). */
+  endAt?: string;
 }
 
 /** Ícone de rede social exibido na linha abaixo da bio. */
@@ -33,6 +37,16 @@ export interface SocialLink {
   id: string;
   icon: string;
   url: string;
+}
+
+/** IDs de rastreamento de terceiros injetados no HTML exportado. */
+export interface TrackingInfo {
+  /** Google Analytics 4, formato "G-XXXXXXXXXX". */
+  ga4Id: string;
+  /** Meta Pixel, só dígitos. */
+  metaPixelId: string;
+  /** Google Tag Manager, formato "GTM-XXXXXXX". */
+  gtmId: string;
 }
 
 /** Dados de contato do cliente, usados no vCard "Salvar contato" e no JSON-LD. */
@@ -65,6 +79,7 @@ export interface LinktreeConfig {
   /** URL pública onde o cliente hospeda a página (alimenta og:url, canonical e QR code). */
   publishedUrl: string;
   contact: ContactInfo;
+  tracking: TrackingInfo;
 }
 
 export interface TemplateProps {

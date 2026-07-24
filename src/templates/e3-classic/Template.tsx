@@ -1,5 +1,5 @@
 import type { TemplateProps } from "@/templates/types";
-import { initials, linkItemHref, youtubeVideoId } from "@/lib/utils";
+import { initials, linkItemHref, scheduleAttrs, youtubeVideoId } from "@/lib/utils";
 
 export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
   const activeLinks = config.links.filter((link) => link.active);
@@ -40,7 +40,11 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
 
         if (type === "header") {
           return (
-            <div key={item.id} className="section-title">
+            <div
+              key={item.id}
+              className="section-title"
+              {...scheduleAttrs(item)}
+            >
               {item.label}
             </div>
           );
@@ -56,6 +60,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
               href={item.url}
               target="_blank"
               rel="noopener"
+              {...scheduleAttrs(item)}
             >
               <img
                 className="yt-thumb"
@@ -77,6 +82,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
             href={linkItemHref(item)}
             target="_blank"
             rel="noopener"
+            {...scheduleAttrs(item)}
           >
             <div className="icon-wrap">
               <i className={`ti ti-${item.icon}`} />

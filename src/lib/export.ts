@@ -9,6 +9,7 @@ import {
 } from "@/lib/favicon";
 import { buildVcard, hasVcardData, vcardDataUri } from "@/lib/vcard";
 import { qrCodePngBlob } from "@/lib/qrcode";
+import { isWithinSchedule } from "@/lib/utils";
 
 /** Campos que precisam estar preenchidos para publicar. */
 export function exportBlockers(doc: LinktreeDoc): string[] {
@@ -21,6 +22,29 @@ export function exportBlockers(doc: LinktreeDoc): string[] {
     blockers.push("ao menos 1 link ativo com URL");
   }
   return blockers;
+}
+
+/** Avisos não-bloqueantes exibidos antes de publicar (a página sai no ar mesmo assim). */
+export function exportWarnings(doc: LinktreeDoc): string[] {
+  const warnings: string[] = [];
+  if (!doc.photoUrl) warnings.push("sem foto do cliente");
+  if (!doc.bio.trim()) warnings.push("sem bio");
+  if (!doc.publishedUrl.trim()) {
+    warnings.push("sem URL publicada (QR code e tags de SEO ficam de fora)");
+  }
+  const clickable = doc.links.filter(
+    (link) =>
+      link.active && link.url.trim() && (link.type ?? "link") !== "header"
+  );
+  if (
+    clickable.length > 0 &&
+    clickable.every((link) => !isWithinSchedule(link, new Date()))
+  ) {
+    warnings.push(
+      "todos os links ativos estão fora da janela de agendamento (a página abriria vazia hoje)"
+    );
+  }
+  return warnings;
 }
 
 /**

@@ -223,6 +223,44 @@ export function LinkItemForm({
         </>
       )}
 
+      {/* Agendamento: janela de exibição do bloco na página */}
+      <details className="text-sm" open={Boolean(link.startAt || link.endAt)}>
+        <summary className="cursor-pointer select-none text-muted transition-colors hover:text-accent">
+          Agendamento
+          {(link.startAt || link.endAt) && (
+            <span className="ml-2 text-xs text-accent">ativo</span>
+          )}
+        </summary>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted">Exibir a partir de</span>
+            <input
+              type="date"
+              value={link.startAt ?? ""}
+              onChange={(event) =>
+                onUpdate({ startAt: event.target.value || undefined })
+              }
+              className="rounded-md border border-border bg-transparent px-2 py-1 text-sm outline-none transition-colors focus:border-accent"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted">Exibir até (inclusive)</span>
+            <input
+              type="date"
+              value={link.endAt ?? ""}
+              onChange={(event) =>
+                onUpdate({ endAt: event.target.value || undefined })
+              }
+              className="rounded-md border border-border bg-transparent px-2 py-1 text-sm outline-none transition-colors focus:border-accent"
+            />
+          </label>
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          Fora da janela, o bloco fica oculto na página publicada — a troca
+          acontece sozinha, sem novo export.
+        </p>
+      </details>
+
       {/* Destaque: borda no acento + selo de estrela + pulso sutil */}
       {type !== "header" && (
         <label
