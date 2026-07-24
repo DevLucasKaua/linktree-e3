@@ -2,6 +2,7 @@
 
 import type { LinkItem, UtmParams } from "@/templates/types";
 import { IconPicker } from "@/components/editor/IconPicker";
+import { isValidHttpUrl } from "@/lib/utils";
 
 /** Campos UTM exibidos no bloco expansível. */
 const UTM_FIELDS: { key: keyof UtmParams; label: string }[] = [
@@ -11,15 +12,6 @@ const UTM_FIELDS: { key: keyof UtmParams; label: string }[] = [
   { key: "content", label: "content" },
   { key: "term", label: "term" },
 ];
-
-function isValidUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:" || parsed.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
 
 export function LinkItemForm({
   link,
@@ -42,7 +34,7 @@ export function LinkItemForm({
     onUpdate({ utm: { ...link.utm, [key]: rawValue || undefined } });
   }
 
-  const urlInvalid = link.url.trim() !== "" && !isValidUrl(link.url);
+  const urlInvalid = link.url.trim() !== "" && !isValidHttpUrl(link.url);
 
   return (
     <div

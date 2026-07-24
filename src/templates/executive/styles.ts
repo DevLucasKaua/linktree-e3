@@ -24,6 +24,9 @@ body{background:${p.bg};min-height:100vh;display:flex;justify-content:center;fon
 .exec-label{font-size:15px;font-weight:600;color:${p.text};letter-spacing:.4px}
 .exec-desc{font-size:12px;color:${p.muted};margin-top:2px}
 .exec-arrow{color:${p.primary};font-size:18px}
+.exec-contact{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:6px;border:1px solid color-mix(in srgb, ${p.primary} 45%, transparent);color:${p.primary};font-size:12px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;transition:background .15s}
+.exec-contact:hover{background:color-mix(in srgb, ${p.primary} 10%, transparent)}
+.exec-contact i{font-size:16px}
 .exec-divider{width:100%;height:1px;background:color-mix(in srgb, ${p.primary} 30%, transparent)}
 .exec-footer{font-size:11px;color:color-mix(in srgb, ${p.text} 30%, transparent);letter-spacing:.5px}
 `.trim();

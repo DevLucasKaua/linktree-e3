@@ -13,10 +13,12 @@ import { exportBlockers, exportLinktreeZip } from "@/lib/export";
 import { useAuth } from "@/lib/auth-context";
 import { getTemplate } from "@/templates/registry";
 import { initials } from "@/lib/utils";
+import { QrCodeModal } from "@/components/QrCodeModal";
 
 export default function PainelPage() {
   const { user } = useAuth();
   const [linktrees, setLinktrees] = useState<LinktreeDoc[] | null>(null);
+  const [qrTarget, setQrTarget] = useState<LinktreeDoc | null>(null);
 
   useEffect(() => {
     listLinktrees().then(setLinktrees);
@@ -37,6 +39,16 @@ export default function PainelPage() {
         )
       );
     }
+  }
+
+  function handleShowQr(linktree: LinktreeDoc) {
+    if (!linktree.publishedUrl.trim()) {
+      alert(
+        'Edite o linktree e preencha a "URL publicada" para gerar o QR code.'
+      );
+      return;
+    }
+    setQrTarget(linktree);
   }
 
   async function handleDuplicate(linktree: LinktreeDoc) {
@@ -120,6 +132,13 @@ export default function PainelPage() {
                   Exportar
                 </button>
                 <button
+                  onClick={() => handleShowQr(linktree)}
+                  title="QR code da URL publicada"
+                  className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
+                >
+                  QR Code
+                </button>
+                <button
                   onClick={() => handleDuplicate(linktree)}
                   title="Duplicar como base para outro cliente"
                   className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
@@ -136,6 +155,14 @@ export default function PainelPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {qrTarget && (
+        <QrCodeModal
+          url={qrTarget.publishedUrl.trim()}
+          slug={qrTarget.slug}
+          onClose={() => setQrTarget(null)}
+        />
       )}
     </main>
   );

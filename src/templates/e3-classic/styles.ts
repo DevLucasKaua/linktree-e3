@@ -19,6 +19,9 @@ body{background:${p.bg};min-height:100vh;display:flex;justify-content:center;fon
 .btn-label{font-size:15px;font-weight:500;color:${p.text};display:block}
 .btn-desc{font-size:12px;color:${p.muted};display:block;margin-top:2px}
 .arrow{color:${p.primary};font-size:18px}
+.save-contact{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;border:1px solid ${p.border};color:${p.muted};font-size:13px;text-decoration:none;transition:color .15s,border-color .15s}
+.save-contact:hover{color:${p.primary};border-color:${p.primary}}
+.save-contact i{font-size:16px}
 .divider{width:100%;height:0.5px;background:color-mix(in srgb, ${p.text} 10%, transparent)}
 .footer{font-size:11px;color:color-mix(in srgb, ${p.text} 25%, transparent)}
 `.trim();

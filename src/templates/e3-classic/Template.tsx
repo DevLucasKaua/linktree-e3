@@ -1,7 +1,7 @@
 import type { TemplateProps } from "@/templates/types";
 import { buildUrlWithUtms, initials } from "@/lib/utils";
 
-export function Template({ config, photoSrc }: TemplateProps) {
+export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
   const activeLinks = config.links.filter((link) => link.active);
 
   return (
@@ -38,6 +38,13 @@ export function Template({ config, photoSrc }: TemplateProps) {
           <i className="ti ti-arrow-right arrow" />
         </a>
       ))}
+
+      {vcardSrc && (
+        <a className="save-contact" href={vcardSrc} download="contato.vcf">
+          <i className="ti ti-user-plus" />
+          Salvar contato
+        </a>
+      )}
 
       <div className="divider" />
       <span className="footer">

@@ -22,6 +22,9 @@ body{background:${p.bg};min-height:100vh;display:flex;justify-content:center;fon
 .cartao-titulo{font-size:15px;font-weight:700;color:${p.text};letter-spacing:.3px}
 .cartao-descricao{font-size:12px;color:${p.muted};margin-top:2px;line-height:1.4}
 .cartao-seta{color:${p.border};font-size:17px}
+.salvar-contato{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:4px;border:1px solid ${p.border};color:${p.primary};font-size:13px;letter-spacing:.4px;text-decoration:none;transition:background .15s}
+.salvar-contato:hover{background:color-mix(in srgb, ${p.border} 15%, transparent)}
+.salvar-contato i{font-size:16px}
 .divisor{width:100%;height:1px;background:color-mix(in srgb, ${p.border} 35%, transparent)}
 .rodape{font-size:11px;color:color-mix(in srgb, ${p.text} 40%, transparent);letter-spacing:.4px;text-align:center}
 `.trim();

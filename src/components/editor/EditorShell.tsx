@@ -16,8 +16,10 @@ import { useAuth } from "@/lib/auth-context";
 import { TEMPLATES, getTemplate } from "@/templates/registry";
 import { PreviewFrame } from "@/components/editor/PreviewFrame";
 import { ClientForm } from "@/components/editor/ClientForm";
+import { ContactForm } from "@/components/editor/ContactForm";
 import { PaletteEditor } from "@/components/editor/PaletteEditor";
 import { LinksEditor } from "@/components/editor/LinksEditor";
+import { QrCodeModal } from "@/components/QrCodeModal";
 
 type SaveState = "salvo" | "salvando" | "erro";
 
@@ -31,8 +33,10 @@ export interface SectionProps {
 
 export function EditorShell({ initial }: { initial: LinktreeDoc }) {
   const { user } = useAuth();
+  const userEmail = user?.email ?? "";
   const [docState, setDocState] = useState<LinktreeDoc>(initial);
   const [saveState, setSaveState] = useState<SaveState>("salvo");
+  const [showQr, setShowQr] = useState(false);
   const pendingChanges = useRef<LinktreeUpdate>({});
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -42,7 +46,7 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     pendingChanges.current = {};
     setSaveState("salvando");
     try {
-      await updateLinktree(initial.id, changes, user?.email ?? "");
+      await updateLinktree(initial.id, changes, userEmail);
       // Se novas mudanças chegaram durante o save, o próximo flush cuida delas.
       if (Object.keys(pendingChanges.current).length === 0) {
         setSaveState("salvo");
@@ -52,7 +56,7 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
       pendingChanges.current = { ...changes, ...pendingChanges.current };
       setSaveState("erro");
     }
-  }, [initial.id, user?.email]);
+  }, [initial.id, userEmail]);
 
   const onChange = useCallback(
     (changes: LinktreeUpdate) => {
@@ -101,6 +105,16 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     alert("HTML copiado para a área de transferência!");
   }
 
+  function handleShowQr() {
+    if (!docState.publishedUrl.trim()) {
+      alert(
+        'Preencha a "URL publicada" na seção Publicação e contato para gerar o QR code.'
+      );
+      return;
+    }
+    setShowQr(true);
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -141,6 +155,12 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
             ))}
           </select>
           <button
+            onClick={handleShowQr}
+            className="rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent"
+          >
+            QR Code
+          </button>
+          <button
             onClick={handleCopyHtml}
             className="rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent"
           >
@@ -158,6 +178,7 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_400px]">
         <div className="flex min-w-0 flex-col gap-8">
           <ClientForm value={docState} onChange={onChange} />
+          <ContactForm value={docState} onChange={onChange} />
           <PaletteEditor value={docState} onChange={onChange} />
           <LinksEditor value={docState} onChange={onChange} />
         </div>
@@ -173,6 +194,14 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
           />
         </div>
       </div>
+
+      {showQr && (
+        <QrCodeModal
+          url={docState.publishedUrl.trim()}
+          slug={docState.slug}
+          onClose={() => setShowQr(false)}
+        />
+      )}
     </div>
   );
 }
