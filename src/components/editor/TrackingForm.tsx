@@ -3,6 +3,8 @@
 import type { TrackingInfo } from "@/templates/types";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { TRACKING_PATTERNS } from "@/lib/utils";
+import { Section } from "@/components/ui/Section";
+import { Field, Input } from "@/components/ui/Field";
 
 /** Campos de rastreamento com placeholder e dica de formato. */
 const FIELDS: {
@@ -38,13 +40,10 @@ export function TrackingForm({ value, onChange }: SectionProps) {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-surface p-5">
-      <h2 className="font-semibold">Rastreamento</h2>
-      <p className="mb-4 mt-1 text-sm text-muted">
-        Os pixels são injetados no site exportado; o cliente acompanha as
-        visitas na própria ferramenta. Campos vazios ficam de fora.
-      </p>
-
+    <Section
+      title="Rastreamento"
+      description="Os pixels são injetados no site exportado; o cliente acompanha as visitas na própria ferramenta. Campos vazios ficam de fora."
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {FIELDS.map(({ key, label, placeholder, formatHint }) => {
           const fieldValue = value.tracking[key];
@@ -52,28 +51,26 @@ export function TrackingForm({ value, onChange }: SectionProps) {
             fieldValue.trim() !== "" &&
             !TRACKING_PATTERNS[key].test(fieldValue.trim());
           return (
-            <label key={key} className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">{label}</span>
-              <input
-                type="text"
+            <Field
+              key={key}
+              label={label}
+              error={
+                invalid
+                  ? `Formato inválido (${formatHint}) — será ignorado no export.`
+                  : null
+              }
+            >
+              <Input
+                invalid={invalid}
                 value={fieldValue}
                 onChange={(event) => update(key, event.target.value)}
                 placeholder={placeholder}
-                className={`rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none transition-colors ${
-                  invalid
-                    ? "border-red-400 focus:border-red-400"
-                    : "border-border focus:border-accent"
-                }`}
+                className="font-mono"
               />
-              {invalid && (
-                <span className="text-xs text-red-400">
-                  Formato inválido ({formatHint}) — será ignorado no export.
-                </span>
-              )}
-            </label>
+            </Field>
           );
         })}
       </div>
-    </section>
+    </Section>
   );
 }

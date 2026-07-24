@@ -22,6 +22,13 @@ import { useAuth } from "@/lib/auth-context";
 import { TEMPLATES, getTemplate } from "@/templates/registry";
 import { initials } from "@/lib/utils";
 import { QrCodeModal } from "@/components/QrCodeModal";
+import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/Confirm";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Menu } from "@/components/ui/Menu";
+import { Segmented } from "@/components/ui/Segmented";
+import { Select } from "@/components/ui/Field";
 
 type Tab = "ativos" | "lixeira";
 type SortKey = "updated" | "name" | "created";
@@ -32,9 +39,15 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "created", label: "Criação recente" },
 ];
 
+/** Link estilizado como botão secundário (mesmo vocabulário do Button). */
+const LINK_BUTTON_CLASS =
+  "inline-flex items-center gap-1.5 rounded-lg border border-hair bg-surface px-3 py-1.5 text-sm transition-colors hover:border-muted";
+
 export default function PainelPage() {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
+  const toast = useToast();
+  const confirmDialog = useConfirm();
   const [linktrees, setLinktrees] = useState<LinktreeDoc[] | null>(null);
   const [qrTarget, setQrTarget] = useState<LinktreeDoc | null>(null);
   const [tab, setTab] = useState<Tab>("ativos");
@@ -91,13 +104,20 @@ export default function PainelPage() {
   async function handleExport(linktree: LinktreeDoc) {
     const blockers = exportBlockers(linktree);
     if (blockers.length > 0) {
-      alert(`Antes de publicar, edite e preencha: ${blockers.join(", ")}.`);
+      toast(
+        `Antes de publicar, edite e preencha: ${blockers.join(", ")}.`,
+        "err"
+      );
       return;
     }
     const warnings = exportWarnings(linktree);
     if (
       warnings.length > 0 &&
-      !confirm(`Atenção:\n• ${warnings.join("\n• ")}\n\nExportar mesmo assim?`)
+      !(await confirmDialog({
+        title: "Exportar mesmo assim?",
+        message: `• ${warnings.join("\n• ")}`,
+        confirmLabel: "Exportar",
+      }))
     ) {
       return;
     }
@@ -107,12 +127,14 @@ export default function PainelPage() {
       status: "publicado",
       lastExportedAt: Timestamp.now(),
     });
+    toast("ZIP exportado — pronto para subir na hospedagem.");
   }
 
   function handleShowQr(linktree: LinktreeDoc) {
     if (!linktree.publishedUrl.trim()) {
-      alert(
-        'Edite o linktree e preencha a "URL publicada" para gerar o QR code.'
+      toast(
+        'Edite o linktree e preencha a "URL publicada" para gerar o QR code.',
+        "err"
       );
       return;
     }
@@ -122,89 +144,86 @@ export default function PainelPage() {
   async function handleDuplicate(linktree: LinktreeDoc) {
     await duplicateLinktree(linktree, user?.email ?? "");
     setLinktrees(await listLinktrees(user?.email ?? "", isAdmin));
+    toast("Linktree duplicado como rascunho.");
   }
 
   async function handleTrash(linktree: LinktreeDoc) {
     await softDeleteLinktree(linktree.id);
     patchLocal(linktree.id, { deletedAt: Timestamp.now() });
+    toast("Movido para a lixeira.");
   }
 
   async function handleRestore(linktree: LinktreeDoc) {
     await restoreLinktree(linktree.id);
     patchLocal(linktree.id, { deletedAt: null });
+    toast("Linktree restaurado.");
   }
 
   async function handleHardDelete(linktree: LinktreeDoc) {
-    const confirmed = confirm(
-      `Excluir DEFINITIVAMENTE o linktree de "${linktree.clientName}"? Essa ação não pode ser desfeita.`
-    );
+    const confirmed = await confirmDialog({
+      title: "Excluir definitivamente?",
+      message: `O linktree de "${linktree.clientName}" será apagado para sempre. Essa ação não pode ser desfeita.`,
+      confirmLabel: "Excluir para sempre",
+      danger: true,
+    });
     if (!confirmed) return;
     await deleteLinktree(linktree.id);
     setLinktrees((current) =>
       (current ?? []).filter((item) => item.id !== linktree.id)
     );
+    toast("Linktree excluído definitivamente.");
   }
 
-  const actionButtonClass =
-    "rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent";
+  const activesEmpty =
+    (linktrees ?? []).filter((item) => !item.deletedAt).length === 0;
 
   return (
-    <main className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">Linktrees</h1>
-          {/* Abas Ativos / Lixeira */}
-          <div className="flex items-center rounded-lg border border-border p-0.5 text-sm">
-            {(
-              [
-                { key: "ativos", label: "Ativos" },
-                { key: "lixeira", label: `Lixeira (${trashedCount})` },
-              ] as const
-            ).map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`rounded-md px-3 py-1 transition-colors ${
-                  tab === key
-                    ? "bg-accent font-medium text-black"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+    <main className="flex flex-1 flex-col gap-5">
+      {/* Cabeçalho da view */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-tight">
+            Linktrees
+          </h1>
+          <p className="mt-0.5 text-[13px] text-muted">
+            Páginas de bio-link dos clientes E3
+          </p>
         </div>
-        <Link
-          href="/novo"
-          className="rounded-lg bg-accent px-4 py-2 font-medium text-black transition-colors hover:bg-accent-hover"
-        >
-          + Novo linktree
-        </Link>
+        <Segmented
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "ativos", label: "Ativos" },
+            { value: "lixeira", label: `Lixeira (${trashedCount})` },
+          ]}
+        />
       </div>
 
       {/* Busca, filtros e ordenação */}
       <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por nome ou slug…"
-          className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-accent sm:max-w-xs"
-        />
-        <select
+        <div className="relative min-w-0 flex-1 sm:max-w-xs">
+          <i className="ti ti-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por nome ou slug…"
+            className="w-full rounded-lg border border-hair bg-surface py-2 pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted focus:border-accent"
+          />
+        </div>
+        <Select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
-          className="rounded-md border border-border bg-surface px-2 py-2 text-sm"
+          className="w-auto"
         >
           <option value="todos">Todos os status</option>
           <option value="publicado">Publicado</option>
           <option value="rascunho">Rascunho</option>
-        </select>
-        <select
+        </Select>
+        <Select
           value={templateFilter}
           onChange={(event) => setTemplateFilter(event.target.value)}
-          className="rounded-md border border-border bg-surface px-2 py-2 text-sm"
+          className="w-auto"
         >
           <option value="todos">Todos os templates</option>
           {Object.values(TEMPLATES).map((template) => (
@@ -212,46 +231,64 @@ export default function PainelPage() {
               {template.name}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           value={sortKey}
           onChange={(event) => setSortKey(event.target.value as SortKey)}
-          className="rounded-md border border-border bg-surface px-2 py-2 text-sm"
+          className="w-auto"
         >
           {SORT_OPTIONS.map(({ key, label }) => (
             <option key={key} value={key}>
               {label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {linktrees === null ? (
-        <p className="text-muted">Carregando…</p>
+        /* Skeleton de carregamento */
+        <ul className="flex flex-col gap-3" aria-hidden>
+          {[0, 1, 2].map((row) => (
+            <li
+              key={row}
+              className="flex animate-pulse items-center gap-4 rounded-xl border border-hair bg-surface p-4"
+            >
+              <div className="h-12 w-12 shrink-0 rounded-full bg-hover" />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="h-3.5 w-44 rounded bg-hover" />
+                <div className="h-3 w-64 rounded bg-hover" />
+              </div>
+            </li>
+          ))}
+        </ul>
       ) : visible.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border p-12 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-hair p-12 text-center">
+          <i
+            className={`ti ${tab === "lixeira" ? "ti-trash-off" : "ti-layout-list"} text-2xl text-muted`}
+          />
           <p className="font-medium">
             {tab === "lixeira"
               ? "Lixeira vazia"
-              : linktrees.filter((item) => !item.deletedAt).length === 0
+              : activesEmpty
                 ? "Nenhum linktree ainda"
                 : "Nada encontrado com esses filtros"}
           </p>
-          {tab === "ativos" &&
-            linktrees.filter((item) => !item.deletedAt).length === 0 && (
-              <p className="text-sm text-muted">
-                Crie o primeiro escolhendo um template.
-              </p>
-            )}
+          {tab === "ativos" && activesEmpty && (
+            <p className="text-sm text-muted">
+              Crie o primeiro pelo botão &quot;Novo linktree&quot; na barra
+              lateral.
+            </p>
+          )}
         </div>
       ) : (
         <ul className="flex flex-col gap-3">
-          {visible.map((linktree) => (
+          {visible.map((linktree, index) => (
             <li
               key={linktree.id}
-              className="flex items-center gap-4 rounded-xl border border-border bg-surface p-4"
+              style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
+              className="flex animate-rise items-center gap-4 rounded-xl border border-hair bg-surface p-4 transition-shadow hover:shadow-card"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-background">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-hair bg-bg">
                 {linktree.photoUrl ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
@@ -269,12 +306,12 @@ export default function PainelPage() {
                 <div className="flex items-center gap-2">
                   <p className="truncate font-medium">{linktree.clientName}</p>
                   {tab === "ativos" && hasUnexportedChanges(linktree) && (
-                    <span
+                    <Badge
+                      variant="warn"
                       title="Houve edições depois do último export — exporte de novo para publicar"
-                      className="shrink-0 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-xs text-amber-400"
                     >
                       alterações não exportadas
-                    </span>
+                    </Badge>
                   )}
                 </div>
                 <p className="truncate text-sm text-muted">
@@ -282,7 +319,7 @@ export default function PainelPage() {
                   {linktree.status === "publicado" ? "Publicado" : "Rascunho"}
                   {linktree.updatedAt &&
                     ` · ${linktree.updatedAt.toDate().toLocaleDateString("pt-BR")}`}
-                  {/* Dono: admin vê o gestor de cada linktree; todos veem o legado sem dono */}
+                  {/* Dono: admin vê o gestor; todos veem o legado sem dono */}
                   {isAdmin && linktree.ownerEmail && ` · ${linktree.ownerEmail}`}
                   {!linktree.ownerEmail && " · sem dono"}
                 </p>
@@ -292,52 +329,52 @@ export default function PainelPage() {
                   <>
                     <Link
                       href={`/editor/${linktree.id}`}
-                      className={actionButtonClass}
+                      className={LINK_BUTTON_CLASS}
                     >
+                      <i className="ti ti-pencil" />
                       Editar
                     </Link>
-                    <button
-                      onClick={() => handleExport(linktree)}
-                      className={actionButtonClass}
-                    >
+                    <Button onClick={() => handleExport(linktree)}>
+                      <i className="ti ti-download" />
                       Exportar
-                    </button>
-                    <button
-                      onClick={() => handleShowQr(linktree)}
-                      title="QR code da URL publicada"
-                      className={actionButtonClass}
-                    >
-                      QR Code
-                    </button>
-                    <button
-                      onClick={() => handleDuplicate(linktree)}
-                      title="Duplicar como base para outro cliente"
-                      className={actionButtonClass}
-                    >
-                      Duplicar
-                    </button>
-                    <button
-                      onClick={() => handleTrash(linktree)}
-                      title="Mover para a lixeira (dá para restaurar)"
-                      className="rounded-md border border-border px-3 py-1.5 text-sm text-red-400 transition-colors hover:border-red-400"
-                    >
-                      Excluir
-                    </button>
+                    </Button>
+                    <Menu
+                      items={[
+                        {
+                          label: "QR code",
+                          icon: "qrcode",
+                          onSelect: () => handleShowQr(linktree),
+                        },
+                        {
+                          label: "Duplicar",
+                          icon: "copy",
+                          onSelect: () => handleDuplicate(linktree),
+                        },
+                        {
+                          label: "Mover para a lixeira",
+                          icon: "trash",
+                          danger: true,
+                          onSelect: () => handleTrash(linktree),
+                        },
+                      ]}
+                    />
                   </>
                 ) : (
                   <>
-                    <button
-                      onClick={() => handleRestore(linktree)}
-                      className={actionButtonClass}
-                    >
+                    <Button onClick={() => handleRestore(linktree)}>
+                      <i className="ti ti-arrow-back-up" />
                       Restaurar
-                    </button>
-                    <button
-                      onClick={() => handleHardDelete(linktree)}
-                      className="rounded-md border border-border px-3 py-1.5 text-sm text-red-400 transition-colors hover:border-red-400"
-                    >
-                      Excluir definitivo
-                    </button>
+                    </Button>
+                    <Menu
+                      items={[
+                        {
+                          label: "Excluir definitivamente",
+                          icon: "trash-x",
+                          danger: true,
+                          onSelect: () => handleHardDelete(linktree),
+                        },
+                      ]}
+                    />
                   </>
                 )}
               </div>
