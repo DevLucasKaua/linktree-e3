@@ -2,7 +2,7 @@
 
 import type { LinkItem, UtmParams } from "@/templates/types";
 import { IconPicker } from "@/components/editor/IconPicker";
-import { isValidHttpUrl } from "@/lib/utils";
+import { isValidHttpUrl, youtubeVideoId } from "@/lib/utils";
 
 /** Campos UTM exibidos no bloco expansível. */
 const UTM_FIELDS: { key: keyof UtmParams; label: string }[] = [
@@ -12,6 +12,13 @@ const UTM_FIELDS: { key: keyof UtmParams; label: string }[] = [
   { key: "content", label: "content" },
   { key: "term", label: "term" },
 ];
+
+/** Nome exibido no selo do tipo (o tipo "link" não mostra selo). */
+const TYPE_NAMES = {
+  header: "Cabeçalho",
+  whatsapp: "WhatsApp",
+  youtube: "Vídeo",
+} as const;
 
 export function LinkItemForm({
   link,
@@ -30,11 +37,22 @@ export function LinkItemForm({
   onDuplicate: () => void;
   onMove: (direction: -1 | 1) => void;
 }) {
+  const type = link.type ?? "link";
+
   function updateUtm(key: keyof UtmParams, rawValue: string) {
     onUpdate({ utm: { ...link.utm, [key]: rawValue || undefined } });
   }
 
-  const urlInvalid = link.url.trim() !== "" && !isValidHttpUrl(link.url);
+  const urlInvalid =
+    type === "link" && link.url.trim() !== "" && !isValidHttpUrl(link.url);
+  const phoneInvalid =
+    type === "whatsapp" &&
+    link.url.trim() !== "" &&
+    link.url.replace(/\D/g, "").length < 10;
+  const videoInvalid =
+    type === "youtube" &&
+    link.url.trim() !== "" &&
+    youtubeVideoId(link.url) === null;
 
   return (
     <div
@@ -42,9 +60,18 @@ export function LinkItemForm({
         link.active ? "" : "opacity-60"
       }`}
     >
-      {/* Linha do topo: ícone, título e ações */}
+      {/* Linha do topo: ícone, título, selo do tipo e ações */}
       <div className="flex items-center gap-2">
-        <IconPicker value={link.icon} onSelect={(icon) => onUpdate({ icon })} />
+        {type === "link" ? (
+          <IconPicker
+            value={link.icon}
+            onSelect={(icon) => onUpdate({ icon })}
+          />
+        ) : (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-lg text-muted">
+            <i className={`ti ti-${link.icon}`} />
+          </div>
+        )}
         <input
           type="text"
           value={link.label}
@@ -53,6 +80,11 @@ export function LinkItemForm({
           aria-label="Título"
           className="min-w-0 flex-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
         />
+        {type !== "link" && (
+          <span className="shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-muted">
+            {TYPE_NAMES[type]}
+          </span>
+        )}
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
@@ -75,7 +107,7 @@ export function LinkItemForm({
           <button
             type="button"
             onClick={onDuplicate}
-            title="Duplicar link"
+            title="Duplicar bloco"
             className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition-colors hover:border-accent"
           >
             <i className="ti ti-copy" />
@@ -83,14 +115,14 @@ export function LinkItemForm({
           <button
             type="button"
             onClick={onRemove}
-            title="Excluir link"
+            title="Excluir bloco"
             className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-red-400 transition-colors hover:border-red-400"
           >
             <i className="ti ti-trash" />
           </button>
           <label
             className="ml-1 flex cursor-pointer items-center gap-1.5 text-sm text-muted"
-            title="Exibir ou ocultar o link na página"
+            title="Exibir ou ocultar o bloco na página"
           >
             <input
               type="checkbox"
@@ -103,52 +135,131 @@ export function LinkItemForm({
         </div>
       </div>
 
-      <input
-        type="text"
-        value={link.description ?? ""}
-        onChange={(event) => onUpdate({ description: event.target.value })}
-        placeholder="Descrição (opcional)"
-        aria-label="Descrição (opcional)"
-        className="rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
-      />
-
-      <input
-        type="url"
-        value={link.url}
-        onChange={(event) => onUpdate({ url: event.target.value })}
-        placeholder="https://..."
-        aria-label="URL"
-        className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
-          urlInvalid
-            ? "border-red-400 focus:border-red-400"
-            : "border-border focus:border-accent"
-        }`}
-      />
-      {urlInvalid && (
-        <span className="text-xs text-red-400">
-          URL inválida — precisa começar com https:// (ou http://).
-        </span>
+      {/* Cabeçalho só tem título; os demais tipos têm campos próprios */}
+      {type === "link" && (
+        <input
+          type="text"
+          value={link.description ?? ""}
+          onChange={(event) => onUpdate({ description: event.target.value })}
+          placeholder="Descrição (opcional)"
+          aria-label="Descrição (opcional)"
+          className="rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+        />
       )}
 
-      <details className="text-sm">
-        <summary className="cursor-pointer select-none text-muted transition-colors hover:text-accent">
-          Parâmetros UTM
-        </summary>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {UTM_FIELDS.map(({ key, label }) => (
-            <label key={key} className="flex flex-col gap-1">
-              <span className="text-xs text-muted">{label}</span>
-              <input
-                type="text"
-                value={link.utm?.[key] ?? ""}
-                onChange={(event) => updateUtm(key, event.target.value)}
-                placeholder={`utm_${label}`}
-                className="rounded-md border border-border bg-transparent px-2 py-1 text-sm outline-none transition-colors focus:border-accent"
-              />
-            </label>
-          ))}
-        </div>
-      </details>
+      {type === "link" && (
+        <>
+          <input
+            type="url"
+            value={link.url}
+            onChange={(event) => onUpdate({ url: event.target.value })}
+            placeholder="https://..."
+            aria-label="URL"
+            className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
+              urlInvalid
+                ? "border-red-400 focus:border-red-400"
+                : "border-border focus:border-accent"
+            }`}
+          />
+          {urlInvalid && (
+            <span className="text-xs text-red-400">
+              URL inválida — precisa começar com https:// (ou http://).
+            </span>
+          )}
+        </>
+      )}
+
+      {type === "whatsapp" && (
+        <>
+          <input
+            type="tel"
+            value={link.url}
+            onChange={(event) => onUpdate({ url: event.target.value })}
+            placeholder="Número com DDI — ex: +55 11 99999-9999"
+            aria-label="Número do WhatsApp"
+            className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
+              phoneInvalid
+                ? "border-red-400 focus:border-red-400"
+                : "border-border focus:border-accent"
+            }`}
+          />
+          {phoneInvalid && (
+            <span className="text-xs text-red-400">
+              Número incompleto — use DDI + DDD + número (ex: +55 11
+              99999-9999).
+            </span>
+          )}
+          <textarea
+            rows={2}
+            value={link.message ?? ""}
+            onChange={(event) => onUpdate({ message: event.target.value })}
+            placeholder="Mensagem pré-preenchida (opcional) — ex: Olá! Gostaria de agendar uma consulta."
+            aria-label="Mensagem pré-preenchida"
+            className="resize-none rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </>
+      )}
+
+      {type === "youtube" && (
+        <>
+          <input
+            type="url"
+            value={link.url}
+            onChange={(event) => onUpdate({ url: event.target.value })}
+            placeholder="https://youtube.com/watch?v=..."
+            aria-label="URL do vídeo"
+            className={`rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
+              videoInvalid
+                ? "border-red-400 focus:border-red-400"
+                : "border-border focus:border-accent"
+            }`}
+          />
+          {videoInvalid && (
+            <span className="text-xs text-red-400">
+              URL de vídeo não reconhecida — na página, será exibido como botão
+              comum em vez de cartão com thumbnail.
+            </span>
+          )}
+        </>
+      )}
+
+      {/* Destaque: borda no acento + selo de estrela + pulso sutil */}
+      {type !== "header" && (
+        <label
+          className="flex cursor-pointer items-center gap-1.5 self-start text-sm text-muted"
+          title="Borda na cor de destaque, selo de estrela e animação sutil"
+        >
+          <input
+            type="checkbox"
+            checked={link.highlight ?? false}
+            onChange={(event) => onUpdate({ highlight: event.target.checked })}
+            className="accent-accent"
+          />
+          Destacar este bloco
+        </label>
+      )}
+
+      {type === "link" && (
+        <details className="text-sm">
+          <summary className="cursor-pointer select-none text-muted transition-colors hover:text-accent">
+            Parâmetros UTM
+          </summary>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {UTM_FIELDS.map(({ key, label }) => (
+              <label key={key} className="flex flex-col gap-1">
+                <span className="text-xs text-muted">{label}</span>
+                <input
+                  type="text"
+                  value={link.utm?.[key] ?? ""}
+                  onChange={(event) => updateUtm(key, event.target.value)}
+                  placeholder={`utm_${label}`}
+                  className="rounded-md border border-border bg-transparent px-2 py-1 text-sm outline-none transition-colors focus:border-accent"
+                />
+              </label>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

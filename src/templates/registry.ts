@@ -60,14 +60,34 @@ export const SAMPLE_CONFIG: Omit<LinktreeConfig, "templateId" | "palette"> = {
     email: "contato@exemplo.adv.br",
     org: "Rocha Advocacia",
   },
+  socials: [
+    {
+      id: "sample-social-1",
+      icon: "brand-instagram",
+      url: "https://instagram.com/exemplo",
+    },
+    {
+      id: "sample-social-2",
+      icon: "brand-linkedin",
+      url: "https://linkedin.com/in/exemplo",
+    },
+    {
+      id: "sample-social-3",
+      icon: "brand-youtube",
+      url: "https://youtube.com/@exemplo",
+    },
+  ],
   links: [
     {
       id: "sample-1",
+      type: "whatsapp",
       label: "Agende uma consulta",
       description: "Atendimento por WhatsApp",
       icon: "brand-whatsapp",
-      url: "https://wa.me/5511999999999",
+      url: "+55 11 99999-9999",
+      message: "Olá! Vim pelo seu linktree e gostaria de agendar uma consulta.",
       active: true,
+      highlight: true,
     },
     {
       id: "sample-2",

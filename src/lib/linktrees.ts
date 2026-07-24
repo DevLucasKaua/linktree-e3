@@ -46,6 +46,7 @@ function fromSnapshot(snap: QueryDocumentSnapshot): LinktreeDoc {
     templateId: data.templateId ?? "e3-classic",
     palette: data.palette ?? getTemplate(data.templateId).defaultPalette,
     links: data.links ?? [],
+    socials: data.socials ?? [],
     publishedUrl: data.publishedUrl ?? "",
     contact: {
       phone: data.contact?.phone ?? "",
@@ -75,6 +76,7 @@ export async function createLinktree(
     templateId: template.id,
     palette: template.defaultPalette,
     links: [],
+    socials: [],
     publishedUrl: "",
     contact: { phone: "", email: "", org: "" },
     photoUrl: null,
@@ -128,6 +130,10 @@ export async function duplicateLinktree(
     templateId: source.templateId,
     palette: source.palette,
     links: source.links.map((link) => ({ ...link, id: crypto.randomUUID() })),
+    socials: source.socials.map((social) => ({
+      ...social,
+      id: crypto.randomUUID(),
+    })),
     // A cópia será publicada em outra URL; contato acompanha o cliente.
     publishedUrl: "",
     contact: { ...source.contact },

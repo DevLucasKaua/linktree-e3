@@ -1,13 +1,14 @@
 import type { TemplateProps } from "@/templates/types";
-import { buildUrlWithUtms, initials } from "@/lib/utils";
+import { initials, linkItemHref, youtubeVideoId } from "@/lib/utils";
 
 /** Template Gradiente: fundo em gradiente escuro com cartões de vidro (glassmorphism). */
 export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
   const activeLinks = config.links.filter((link) => link.active);
+  const socials = config.socials.filter((social) => social.url.trim());
 
   return (
     <main className="glass-page">
-      {/* Cabeçalho: foto com anel em gradiente, nome e bio */}
+      {/* Cabeçalho: foto com anel em gradiente, nome, bio e redes */}
       <header className="glass-header">
         <div className="avatar-ring">
           <div className="avatar">
@@ -22,30 +23,87 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
         </div>
         <h1 className="client-name">{config.clientName}</h1>
         {config.bio && <p className="client-bio">{config.bio}</p>}
+        {socials.length > 0 && (
+          <div className="glass-socials">
+            {socials.map((social) => (
+              <a
+                key={social.id}
+                className="glass-social"
+                href={social.url}
+                target="_blank"
+                rel="noopener"
+                aria-label={social.icon.replace("brand-", "")}
+              >
+                <i className={`ti ti-${social.icon}`} />
+              </a>
+            ))}
+          </div>
+        )}
       </header>
 
-      {/* Lista de links ativos como cartões translúcidos */}
+      {/* Blocos ativos como cartões translúcidos */}
       <nav className="glass-links">
-        {activeLinks.map((link) => (
-          <a
-            key={link.id}
-            className="glass-card"
-            href={buildUrlWithUtms(link.url, link.utm)}
-            target="_blank"
-            rel="noopener"
-          >
-            <span className="card-icon">
-              <i className={`ti ti-${link.icon}`} />
-            </span>
-            <span className="card-text">
-              <span className="card-label">{link.label}</span>
-              {link.description && (
-                <span className="card-desc">{link.description}</span>
+        {activeLinks.map((item) => {
+          const type = item.type ?? "link";
+
+          if (type === "header") {
+            return (
+              <div key={item.id} className="glass-section">
+                {item.label}
+              </div>
+            );
+          }
+
+          // Vídeo com URL reconhecida vira cartão com thumbnail; senão cai no cartão padrão.
+          const videoId = type === "youtube" ? youtubeVideoId(item.url) : null;
+          if (videoId) {
+            return (
+              <a
+                key={item.id}
+                className="glass-video"
+                href={item.url}
+                target="_blank"
+                rel="noopener"
+              >
+                <img
+                  className="glass-video-thumb"
+                  src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+                  alt=""
+                />
+                <span className="glass-video-play">
+                  <i className="ti ti-player-play-filled" />
+                </span>
+                <span className="glass-video-label">{item.label}</span>
+              </a>
+            );
+          }
+
+          return (
+            <a
+              key={item.id}
+              className={`glass-card${item.highlight ? " highlight" : ""}`}
+              href={linkItemHref(item)}
+              target="_blank"
+              rel="noopener"
+            >
+              <span className="card-icon">
+                <i className={`ti ti-${item.icon}`} />
+              </span>
+              <span className="card-text">
+                <span className="card-label">{item.label}</span>
+                {item.description && (
+                  <span className="card-desc">{item.description}</span>
+                )}
+              </span>
+              <i className="ti ti-chevron-right card-arrow" />
+              {item.highlight && (
+                <span className="highlight-badge">
+                  <i className="ti ti-star-filled" />
+                </span>
               )}
-            </span>
-            <i className="ti ti-chevron-right card-arrow" />
-          </a>
-        ))}
+            </a>
+          );
+        })}
       </nav>
 
       {/* Botão de download do vCard */}
