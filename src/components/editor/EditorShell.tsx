@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Timestamp } from "firebase/firestore";
 import {
+  markExported,
   updateLinktree,
   type LinktreeDoc,
   type LinktreeUpdate,
@@ -165,8 +167,16 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
   async function handleExportZip() {
     if (!validateForExport()) return;
     await exportLinktreeZip(docState);
-    // Exportou ao menos uma vez: marca como publicado.
-    if (docState.status !== "publicado") onChange({ status: "publicado" });
+    // Salva pendências ANTES do carimbo: o updatedAt fica atrás do
+    // lastExportedAt e o aviso "alterações não exportadas" não dispara à toa.
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    await flush();
+    await markExported(initial.id);
+    setDocState((current) => ({
+      ...current,
+      status: "publicado",
+      lastExportedAt: Timestamp.now(),
+    }));
   }
 
   async function handleCopyHtml() {
