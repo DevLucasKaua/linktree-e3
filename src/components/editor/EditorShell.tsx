@@ -97,6 +97,15 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     [flush]
   );
 
+  // Linktree legado sem dono: reivindica para o gestor ao abrir no editor
+  // (as rules permitem exatamente essa transição "" -> próprio e-mail).
+  const claimed = useRef(false);
+  useEffect(() => {
+    if (claimed.current || initial.ownerEmail !== "" || !userEmail) return;
+    claimed.current = true;
+    onChange({ ownerEmail: userEmail.toLowerCase() });
+  }, [initial.ownerEmail, userEmail, onChange]);
+
   const handleUndo = useCallback(() => {
     const snapshot = history.current.pop();
     if (!snapshot) return;
