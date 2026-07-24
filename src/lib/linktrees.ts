@@ -29,11 +29,18 @@ export interface LinktreeDoc extends LinktreeConfig {
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
   updatedBy: string;
+  /** Preenchido = está na lixeira (soft delete). */
+  deletedAt: Timestamp | null;
+  /** Último export ZIP; base do aviso "alterado desde o export". */
+  lastExportedAt: Timestamp | null;
 }
 
-/** Campos editáveis (tudo menos id e timestamps gerenciados). */
+/** Campos editáveis (tudo menos id e timestamps/metadados gerenciados). */
 export type LinktreeUpdate = Partial<
-  Omit<LinktreeDoc, "id" | "createdAt" | "updatedAt" | "updatedBy">
+  Omit<
+    LinktreeDoc,
+    "id" | "createdAt" | "updatedAt" | "updatedBy" | "deletedAt" | "lastExportedAt"
+  >
 >;
 
 function fromSnapshot(snap: QueryDocumentSnapshot): LinktreeDoc {
@@ -64,6 +71,8 @@ function fromSnapshot(snap: QueryDocumentSnapshot): LinktreeDoc {
     createdAt: data.createdAt ?? null,
     updatedAt: data.updatedAt ?? null,
     updatedBy: data.updatedBy ?? "",
+    deletedAt: data.deletedAt ?? null,
+    lastExportedAt: data.lastExportedAt ?? null,
   };
 }
 
@@ -92,6 +101,8 @@ export async function createLinktree(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     updatedBy: userEmail,
+    deletedAt: null,
+    lastExportedAt: null,
   });
   return created.id;
 }
@@ -122,8 +133,42 @@ export async function updateLinktree(
   });
 }
 
+/** Exclusão definitiva (usada na lixeira). */
 export async function deleteLinktree(id: string): Promise<void> {
   await deleteDoc(doc(getDb(), "linktrees", id));
+}
+
+/** Move para a lixeira (reversível via restoreLinktree). */
+export async function softDeleteLinktree(id: string): Promise<void> {
+  await updateDoc(doc(getDb(), "linktrees", id), {
+    deletedAt: serverTimestamp(),
+  });
+}
+
+export async function restoreLinktree(id: string): Promise<void> {
+  await updateDoc(doc(getDb(), "linktrees", id), { deletedAt: null });
+}
+
+/**
+ * Registra o export ZIP: status publicado + lastExportedAt, em uma escrita só
+ * e SEM bumpar updatedAt — senão o aviso "alterado desde o export" dispararia
+ * logo após o próprio export.
+ */
+export async function markExported(id: string): Promise<void> {
+  await updateDoc(doc(getDb(), "linktrees", id), {
+    status: "publicado",
+    lastExportedAt: serverTimestamp(),
+  });
+}
+
+/** true se houve edição depois do último export ZIP (com folga para as escritas do export). */
+export function hasUnexportedChanges(linktree: LinktreeDoc): boolean {
+  if (!linktree.lastExportedAt || !linktree.updatedAt) return false;
+  const SLACK_MS = 2000;
+  return (
+    linktree.updatedAt.toMillis() >
+    linktree.lastExportedAt.toMillis() + SLACK_MS
+  );
 }
 
 /** Cria uma cópia (rascunho) de um linktree existente; retorna o novo id. */
@@ -152,6 +197,8 @@ export async function duplicateLinktree(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     updatedBy: userEmail,
+    deletedAt: null,
+    lastExportedAt: null,
   });
   return created.id;
 }
