@@ -23,7 +23,7 @@ export function Segmented<T extends string>({
 }) {
   return (
     <div
-      className={`flex items-center gap-0.5 rounded-[9px] bg-seg p-0.5 ${
+      className={`glass flex items-center gap-0.5 rounded-full border border-hair bg-seg p-0.5 ${
         grow ? "w-full" : ""
       }`}
     >
@@ -33,11 +33,11 @@ export function Segmented<T extends string>({
           type="button"
           title={option.title}
           onClick={() => onChange(option.value)}
-          className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-[7px] px-2.5 py-1.5 text-sm transition-colors ${
+          className={`pressable flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
             grow ? "flex-1" : ""
           } ${
             value === option.value
-              ? "bg-surface text-ink shadow-seg"
+              ? "bg-seg-active font-medium text-seg-ink shadow-seg"
               : "text-muted hover:text-ink"
           }`}
         >

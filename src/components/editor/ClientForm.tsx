@@ -85,7 +85,7 @@ export function ClientForm({ value, onChange }: SectionProps) {
         {/* Slug com prefixo fixo "pasta:" */}
         <label className="flex min-w-0 flex-col gap-1.5">
           <FieldLabel>Slug (nome da pasta no deploy)</FieldLabel>
-          <div className="flex items-center overflow-hidden rounded-lg border border-hair bg-bg transition-colors focus-within:border-accent">
+          <div className="flex items-center overflow-hidden rounded-[10px] border border-hair bg-field transition-colors focus-within:border-accent">
             <span className="shrink-0 border-r border-hair px-3 py-2 text-sm text-muted">
               pasta:
             </span>
@@ -131,8 +131,8 @@ export function ClientForm({ value, onChange }: SectionProps) {
                 className="h-20 w-20 rounded-full border border-hair object-cover"
               />
             ) : (
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-hair bg-bg">
-                <span className="text-xl font-semibold text-accent">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-hair bg-active">
+                <span className="text-xl font-semibold text-accent-deep">
                   {initials(value.clientName)}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export function ClientForm({ value, onChange }: SectionProps) {
 
             <div className="flex flex-wrap items-center gap-2">
               {/* Input file escondido, acionado pelo label estilizado de botão */}
-              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-hair bg-surface px-3 py-1.5 text-sm transition-colors hover:border-muted">
+              <label className="glass pressable inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-hair bg-field px-3.5 py-1.5 text-sm hover:bg-hover">
                 <i className="ti ti-upload" />
                 {uploading ? "Enviando…" : "Enviar foto"}
                 <input

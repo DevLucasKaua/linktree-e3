@@ -17,7 +17,7 @@ const SCALE = 0.55;
 
 export function TemplateCard({ template, onSelect, disabled }: TemplateCardProps) {
   return (
-    <div className="flex animate-rise flex-col overflow-hidden rounded-xl border border-hair bg-surface transition-shadow hover:shadow-card">
+    <div className="glass flex animate-rise flex-col overflow-hidden rounded-[20px] border border-hair bg-surface transition-shadow hover:shadow-card">
       <div
         className="relative w-full overflow-hidden"
         style={{ height: FRAME_HEIGHT * SCALE }}
@@ -39,7 +39,7 @@ export function TemplateCard({ template, onSelect, disabled }: TemplateCardProps
         <button
           onClick={() => onSelect(template)}
           disabled={disabled}
-          className="mt-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
+          className="glass-tint pressable mt-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Usar este template
         </button>

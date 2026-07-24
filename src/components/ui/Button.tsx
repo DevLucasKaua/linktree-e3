@@ -3,19 +3,19 @@ import type { ButtonHTMLAttributes } from "react";
 type Variant = "primary" | "secondary" | "danger" | "icon" | "iconDanger";
 
 /**
- * Vocabulário único de botões do painel (linguagem KAPTA):
- * primário "ink" (preto/branco), secundário hairline, destrutivo em `neg`.
+ * Vocabulário único de botões do painel (linguagem clash):
+ * primário no gradiente da marca com glow, secundário chip glass hairline.
  */
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "rounded-lg bg-ink px-4 py-2 font-medium text-bg transition-opacity hover:opacity-85",
+    "glass-tint pressable rounded-full px-4 py-2 font-semibold text-white hover:brightness-110",
   secondary:
-    "rounded-lg border border-hair bg-surface px-3 py-1.5 transition-colors hover:border-muted",
+    "glass pressable rounded-full border border-hair bg-field px-3.5 py-1.5 hover:bg-hover",
   danger:
-    "rounded-lg border border-hair bg-surface px-3 py-1.5 text-neg transition-colors hover:border-neg",
-  icon: "h-8 w-8 rounded-lg border border-hair bg-surface transition-colors hover:border-muted",
+    "glass pressable rounded-full border border-hair bg-field px-3.5 py-1.5 text-neg hover:border-neg",
+  icon: "glass pressable h-8 w-8 rounded-full border border-hair bg-field hover:bg-hover",
   iconDanger:
-    "h-8 w-8 rounded-lg border border-hair bg-surface text-neg transition-colors hover:border-neg",
+    "glass pressable h-8 w-8 rounded-full border border-hair bg-field text-neg hover:border-neg",
 };
 
 export function Button({

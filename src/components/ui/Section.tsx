@@ -16,11 +16,11 @@ export function Section({
 }) {
   return (
     <section
-      className={`rounded-xl border border-hair bg-surface p-5 ${className}`}
+      className={`glass rounded-[20px] border border-hair bg-surface p-5 ${className}`}
     >
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+          <h2 className="text-[17px] font-semibold tracking-tight">{title}</h2>
           {description && (
             <p className="mt-0.5 text-sm text-muted">{description}</p>
           )}

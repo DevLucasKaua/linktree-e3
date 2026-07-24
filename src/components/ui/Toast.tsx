@@ -39,9 +39,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <div
           key={toast.id}
           role="status"
-          className="fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 animate-toast-in items-center gap-2.5 rounded-xl bg-ink px-5 py-3 text-sm text-bg shadow-big"
+          className="glass-strong fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 animate-toast-in items-center gap-2.5 rounded-full border border-white/10 bg-[rgba(19,20,26,0.9)] px-5 py-3 text-sm text-[#f2f3f7] shadow-big"
         >
-          {/* Cores fixas: o fundo do toast é sempre "ink", independe do tema */}
+          {/* Toast é sempre escuro (referência), independe do tema */}
           <i
             className={`ti ${
               toast.kind === "ok"

@@ -14,11 +14,14 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center p-6">
-      <div className="flex w-full max-w-sm animate-pop flex-col items-center gap-7 rounded-2xl border border-hair bg-surface p-8 shadow-card">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <span className="select-none text-sm font-bold uppercase leading-none tracking-tight text-accent">
-            Linktree <b className="font-black">E3</b>
-          </span>
+      <div className="glass flex w-full max-w-sm animate-pop flex-col items-center gap-7 rounded-[20px] border border-hair bg-surface p-8 shadow-big">
+        <div className="flex flex-col items-center gap-3 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-wordmark.svg"
+            alt="E3 Digital"
+            className="h-9 w-auto"
+          />
           <h1 className="text-2xl font-semibold tracking-tight">
             Painel de bio-links
           </h1>
@@ -30,7 +33,7 @@ export default function LoginPage() {
         <button
           onClick={signInWithGoogle}
           disabled={loading}
-          className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-lg border border-hair bg-surface px-6 py-2.5 text-sm font-medium transition-colors hover:border-muted disabled:cursor-not-allowed disabled:opacity-50"
+          className="glass pressable flex w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-hair bg-field px-6 py-2.5 text-sm font-medium hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
             <path

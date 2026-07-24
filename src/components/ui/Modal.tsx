@@ -33,7 +33,7 @@ export function Modal({
     >
       <div
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-md animate-menu-in rounded-2xl border border-hair bg-surface p-6 shadow-big"
+        className="glass-strong w-full max-w-md animate-menu-in rounded-[20px] border border-hair bg-surface p-6 shadow-big"
       >
         <h2 className="text-base font-semibold tracking-tight">{title}</h2>
         {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}

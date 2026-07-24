@@ -67,7 +67,7 @@ export function IconPicker({
         onClick={() => setOpen((current) => !current)}
         title="Trocar ícone"
         aria-expanded={open}
-        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-hair bg-surface transition-colors hover:border-muted"
+        className="glass pressable flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-hair bg-field transition-colors hover:bg-hover"
       >
         <i className={`ti ti-${value}`} />
       </button>
@@ -80,7 +80,7 @@ export function IconPicker({
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute left-0 top-full z-50 mt-1 grid w-64 origin-top-left animate-menu-in grid-cols-6 gap-1 rounded-xl border border-hair bg-surface p-2 shadow-big">
+          <div className="glass-strong absolute left-0 top-full z-50 mt-1 grid w-64 origin-top-left animate-menu-in grid-cols-6 gap-1 rounded-xl border border-hair bg-surface p-2 shadow-big">
             {ICONS.map((icon) => (
               <button
                 key={icon}
