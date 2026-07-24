@@ -80,6 +80,8 @@ export interface LinktreeConfig {
   publishedUrl: string;
   contact: ContactInfo;
   tracking: TrackingInfo;
+  /** ID de fonte Google (src/templates/fonts.ts); "" mantém a fonte do template. */
+  fontId: string;
 }
 
 export interface TemplateProps {
