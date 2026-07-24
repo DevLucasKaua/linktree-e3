@@ -27,6 +27,9 @@ import { QrCodeModal } from "@/components/QrCodeModal";
 type SaveState = "salvo" | "salvando" | "erro";
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
+const UNDO_LIMIT = 30;
+/** Edições em sequência (digitação) viram um único passo de undo. */
+const UNDO_COALESCE_MS = 800;
 
 /** Contrato das seções do formulário: valor atual + patch de mudanças. */
 export interface SectionProps {
@@ -40,8 +43,20 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
   const [docState, setDocState] = useState<LinktreeDoc>(initial);
   const [saveState, setSaveState] = useState<SaveState>("salvo");
   const [showQr, setShowQr] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">(
+    "desktop"
+  );
+  const [historyCount, setHistoryCount] = useState(0);
   const pendingChanges = useRef<LinktreeUpdate>({});
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Espelho do docState para snapshots de undo fora do updater do setState.
+  const docRef = useRef<LinktreeDoc>(initial);
+  const history = useRef<LinktreeDoc[]>([]);
+  const lastSnapshotAt = useRef(0);
+
+  useEffect(() => {
+    docRef.current = docState;
+  }, [docState]);
 
   const flush = useCallback(async () => {
     const changes = pendingChanges.current;
@@ -63,6 +78,14 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
 
   const onChange = useCallback(
     (changes: LinktreeUpdate) => {
+      const now = Date.now();
+      if (now - lastSnapshotAt.current > UNDO_COALESCE_MS) {
+        history.current.push(docRef.current);
+        if (history.current.length > UNDO_LIMIT) history.current.shift();
+        setHistoryCount(history.current.length);
+      }
+      lastSnapshotAt.current = now;
+
       setDocState((current) => ({ ...current, ...changes }));
       pendingChanges.current = { ...pendingChanges.current, ...changes };
       setSaveState("salvando");
@@ -71,6 +94,43 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     },
     [flush]
   );
+
+  const handleUndo = useCallback(() => {
+    const snapshot = history.current.pop();
+    if (!snapshot) return;
+    setHistoryCount(history.current.length);
+    lastSnapshotAt.current = Date.now();
+    setDocState(snapshot);
+    // O snapshot inteiro (menos id/timestamps) entra na fila do autosave.
+    const { id, createdAt, updatedAt, updatedBy, ...editable } = snapshot;
+    void id;
+    void createdAt;
+    void updatedAt;
+    void updatedBy;
+    pendingChanges.current = { ...pendingChanges.current, ...editable };
+    setSaveState("salvando");
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(flush, AUTOSAVE_DEBOUNCE_MS);
+  }, [flush]);
+
+  // Ctrl+Z global; dentro de campos de texto vale o undo nativo do navegador.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const isUndo =
+        (event.ctrlKey || event.metaKey) &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "z";
+      if (!isUndo) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable]")) {
+        return;
+      }
+      event.preventDefault();
+      handleUndo();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleUndo]);
 
   // Salva pendências ao sair da página.
   useEffect(() => {
@@ -165,6 +225,15 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
             ))}
           </select>
           <button
+            onClick={handleUndo}
+            disabled={historyCount === 0}
+            title="Desfazer (Ctrl+Z)"
+            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border"
+          >
+            <i className="ti ti-arrow-back-up" />
+            Desfazer
+          </button>
+          <button
             onClick={handleShowQr}
             className="rounded-md border border-border px-3 py-1.5 transition-colors hover:border-accent"
           >
@@ -196,14 +265,44 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
         </div>
 
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <p className="mb-2 text-sm text-muted">
-            Preview — exatamente o que será publicado
-          </p>
-          <PreviewFrame
-            config={docState}
-            photoSrc={docState.photoUrl}
-            className="h-[700px] w-full rounded-xl border border-border bg-white"
-          />
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-sm text-muted">
+              Preview — exatamente o que será publicado
+            </p>
+            <div className="flex items-center gap-1">
+              {(
+                [
+                  { mode: "mobile", icon: "device-mobile", title: "Celular (375px)" },
+                  { mode: "desktop", icon: "device-desktop", title: "Desktop" },
+                ] as const
+              ).map(({ mode, icon, title }) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setPreviewMode(mode)}
+                  title={title}
+                  className={`flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
+                    previewMode === mode
+                      ? "border-accent text-accent"
+                      : "border-border text-muted hover:border-accent"
+                  }`}
+                >
+                  <i className={`ti ti-${icon}`} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div
+            className={
+              previewMode === "mobile" ? "mx-auto w-[375px] max-w-full" : ""
+            }
+          >
+            <PreviewFrame
+              config={docState}
+              photoSrc={docState.photoUrl}
+              className="h-[700px] w-full rounded-xl border border-border bg-white"
+            />
+          </div>
         </div>
       </div>
 

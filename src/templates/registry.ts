@@ -61,6 +61,7 @@ export const SAMPLE_CONFIG: Omit<LinktreeConfig, "templateId" | "palette"> = {
     org: "Rocha Advocacia",
   },
   tracking: { ga4Id: "", metaPixelId: "", gtmId: "" },
+  fontId: "",
   socials: [
     {
       id: "sample-social-1",

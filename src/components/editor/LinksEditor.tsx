@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { LinkItem, LinkItemType } from "@/templates/types";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { LinkItemForm } from "@/components/editor/LinkItemForm";
@@ -34,6 +35,8 @@ const ADD_OPTIONS: {
 
 export function LinksEditor({ value, onChange }: SectionProps) {
   const links = value.links;
+  // Índice do bloco sendo arrastado; a lista é reordenada ao vivo no dragEnter.
+  const dragFrom = useRef<number | null>(null);
 
   /**
    * Toda operação envia o array completo de links no patch.
@@ -83,6 +86,24 @@ export function LinksEditor({ value, onChange }: SectionProps) {
     commit(next);
   }
 
+  function handleDragStart(index: number) {
+    dragFrom.current = index;
+  }
+
+  function handleDragEnter(index: number) {
+    const from = dragFrom.current;
+    if (from === null || from === index) return;
+    const next = [...links];
+    const [moved] = next.splice(from, 1);
+    next.splice(index, 0, moved);
+    dragFrom.current = index;
+    commit(next);
+  }
+
+  function handleDragEnd() {
+    dragFrom.current = null;
+  }
+
   return (
     <section className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
       <h2 className="font-semibold">Links e blocos</h2>
@@ -103,6 +124,9 @@ export function LinksEditor({ value, onChange }: SectionProps) {
               onRemove={() => handleRemove(index)}
               onDuplicate={() => handleDuplicate(index)}
               onMove={(direction) => handleMove(index, direction)}
+              onDragStart={() => handleDragStart(index)}
+              onDragEnter={() => handleDragEnter(index)}
+              onDragEnd={handleDragEnd}
             />
           ))}
         </div>

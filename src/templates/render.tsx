@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import type { LinktreeConfig, TrackingInfo } from "./types";
 import { getTemplate } from "./registry";
+import { getFont } from "./fonts";
 import { TRACKING_PATTERNS } from "@/lib/utils";
 
 /** Versão fixada do CDN de ícones para estabilidade visual do export. */
@@ -83,15 +84,32 @@ export function buildLinktreeHtml(
 <meta property="og:type" content="website">
 ${headExtras}
 <link rel="stylesheet" href="${TABLER_ICONS_CDN}">
-<style>
+${fontAssets(config.fontId).links}<style>
 ${template.css(config.palette)}
-</style>
+${fontAssets(config.fontId).css}</style>
 </head>
 <body>
 ${tracking.bodyStart}${body}
 ${scheduleScript}</body>
 </html>
 `;
+}
+
+/**
+ * Fonte Google escolhida: links de carregamento (head) + override do body.
+ * O override entra no FINAL do <style> do template — os templates só definem
+ * font-family no body, então a regra posterior vence sem !important.
+ */
+function fontAssets(fontId: string): { links: string; css: string } {
+  const font = getFont(fontId);
+  if (!font) return { links: "", css: "" };
+  return {
+    links: `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${font.googleParam}&display=swap">
+`,
+    css: `body{font-family:${font.family}}
+`,
+  };
 }
 
 /**

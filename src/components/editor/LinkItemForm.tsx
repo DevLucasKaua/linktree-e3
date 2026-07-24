@@ -28,6 +28,9 @@ export function LinkItemForm({
   onRemove,
   onDuplicate,
   onMove,
+  onDragStart,
+  onDragEnter,
+  onDragEnd,
 }: {
   link: LinkItem;
   index: number;
@@ -36,6 +39,9 @@ export function LinkItemForm({
   onRemove: () => void;
   onDuplicate: () => void;
   onMove: (direction: -1 | 1) => void;
+  onDragStart: () => void;
+  onDragEnter: () => void;
+  onDragEnd: () => void;
 }) {
   const type = link.type ?? "link";
 
@@ -56,12 +62,24 @@ export function LinkItemForm({
 
   return (
     <div
+      onDragEnter={onDragEnter}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => event.preventDefault()}
       className={`flex flex-col gap-3 rounded-lg border border-border p-4 ${
         link.active ? "" : "opacity-60"
       }`}
     >
-      {/* Linha do topo: ícone, título, selo do tipo e ações */}
+      {/* Linha do topo: alça de arrastar, ícone, título, selo do tipo e ações */}
       <div className="flex items-center gap-2">
+        <span
+          draggable
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          title="Arrastar para reordenar"
+          className="flex h-9 w-5 shrink-0 cursor-grab items-center justify-center text-muted active:cursor-grabbing"
+        >
+          <i className="ti ti-grip-vertical" />
+        </span>
         {type === "link" ? (
           <IconPicker
             value={link.icon}
