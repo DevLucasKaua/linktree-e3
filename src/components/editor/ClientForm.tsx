@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { isSlugTaken, type LinktreeUpdate } from "@/lib/linktrees";
+import { useAuth } from "@/lib/auth-context";
 import { photoToDataUri } from "@/lib/photo";
 import { initials, slugify } from "@/lib/utils";
 
@@ -10,6 +11,7 @@ const BIO_MAX = 160;
 
 /** Seção "Dados do cliente": nome, slug, bio e foto. */
 export function ClientForm({ value, onChange }: SectionProps) {
+  const { user, role } = useAuth();
   // Rascunho local do slug: só é aplicado (slugificado) no blur,
   // para não travar a digitação a cada tecla.
   const [slugDraft, setSlugDraft] = useState(value.slug);
@@ -41,7 +43,9 @@ export function ClientForm({ value, onChange }: SectionProps) {
     const slug = slugify(slugDraft);
     onChange({ slug });
     // Aviso (não bloqueante) se outro cliente já usa este slug.
-    setSlugTaken(await isSlugTaken(slug, value.id));
+    setSlugTaken(
+      await isSlugTaken(slug, value.id, user?.email ?? "", role === "admin")
+    );
   }
 
   async function handleFileChange(file: File | null) {

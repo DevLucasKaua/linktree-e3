@@ -33,7 +33,8 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 ];
 
 export default function PainelPage() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === "admin";
   const [linktrees, setLinktrees] = useState<LinktreeDoc[] | null>(null);
   const [qrTarget, setQrTarget] = useState<LinktreeDoc | null>(null);
   const [tab, setTab] = useState<Tab>("ativos");
@@ -43,8 +44,9 @@ export default function PainelPage() {
   const [sortKey, setSortKey] = useState<SortKey>("updated");
 
   useEffect(() => {
-    listLinktrees().then(setLinktrees);
-  }, []);
+    if (!user?.email) return;
+    listLinktrees(user.email, isAdmin).then(setLinktrees);
+  }, [user?.email, isAdmin]);
 
   /** Atualiza um item na lista local sem refetch. */
   function patchLocal(id: string, changes: Partial<LinktreeDoc>) {
@@ -119,7 +121,7 @@ export default function PainelPage() {
 
   async function handleDuplicate(linktree: LinktreeDoc) {
     await duplicateLinktree(linktree, user?.email ?? "");
-    setLinktrees(await listLinktrees());
+    setLinktrees(await listLinktrees(user?.email ?? "", isAdmin));
   }
 
   async function handleTrash(linktree: LinktreeDoc) {
@@ -280,6 +282,9 @@ export default function PainelPage() {
                   {linktree.status === "publicado" ? "Publicado" : "Rascunho"}
                   {linktree.updatedAt &&
                     ` · ${linktree.updatedAt.toDate().toLocaleDateString("pt-BR")}`}
+                  {/* Dono: admin vê o gestor de cada linktree; todos veem o legado sem dono */}
+                  {isAdmin && linktree.ownerEmail && ` · ${linktree.ownerEmail}`}
+                  {!linktree.ownerEmail && " · sem dono"}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">

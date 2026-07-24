@@ -17,9 +17,13 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import { getDb, getFirebaseAuth, googleProvider } from "@/lib/firebase";
 
+export type ManagerRole = "admin" | "gestor";
+
 interface AuthContextValue {
   /** Usuário logado E presente na allowlist de gestores; null caso contrário. */
   user: User | null;
+  /** Papel do gestor: "admin" vê/edita tudo (campo role no doc managers/{email}). */
+  role: ManagerRole;
   /** true enquanto o estado inicial de auth ainda não foi resolvido. */
   loading: boolean;
   /** Mensagem de erro de login (ex: e-mail fora da allowlist). */
@@ -30,14 +34,19 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-async function isManager(email: string | null): Promise<boolean> {
-  if (!email) return false;
+/** null = fora da allowlist; senão o papel (role "admin" definido só pelo console). */
+async function getManagerRole(
+  email: string | null
+): Promise<ManagerRole | null> {
+  if (!email) return null;
   const snap = await getDoc(doc(getDb(), "managers", email.toLowerCase()));
-  return snap.exists();
+  if (!snap.exists()) return null;
+  return snap.data().role === "admin" ? "admin" : "gestor";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<ManagerRole>("gestor");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,8 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        if (await isManager(firebaseUser.email)) {
+        const managerRole = await getManagerRole(firebaseUser.email);
+        if (managerRole) {
           setError(null);
+          setRole(managerRole);
           setUser(firebaseUser);
         } else {
           // Conta Google válida, mas fora da allowlist: desloga na hora.
@@ -95,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, error, signInWithGoogle, signOut }}
+      value={{ user, role, loading, error, signInWithGoogle, signOut }}
     >
       {children}
     </AuthContext.Provider>

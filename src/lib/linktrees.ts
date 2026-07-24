@@ -29,6 +29,8 @@ export interface LinktreeDoc extends LinktreeConfig {
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
   updatedBy: string;
+  /** Dono do linktree; "" = legado sem dono (reivindicado ao abrir no editor). */
+  ownerEmail: string;
   /** Preenchido = está na lixeira (soft delete). */
   deletedAt: Timestamp | null;
   /** Último export ZIP; base do aviso "alterado desde o export". */
@@ -71,6 +73,7 @@ function fromSnapshot(snap: QueryDocumentSnapshot): LinktreeDoc {
     createdAt: data.createdAt ?? null,
     updatedAt: data.updatedAt ?? null,
     updatedBy: data.updatedBy ?? "",
+    ownerEmail: data.ownerEmail ?? "",
     deletedAt: data.deletedAt ?? null,
     lastExportedAt: data.lastExportedAt ?? null,
   };
@@ -101,6 +104,7 @@ export async function createLinktree(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     updatedBy: userEmail,
+    ownerEmail: userEmail.toLowerCase(),
     deletedAt: null,
     lastExportedAt: null,
   });
@@ -114,11 +118,36 @@ export async function getLinktree(id: string): Promise<LinktreeDoc | null> {
     : null;
 }
 
-export async function listLinktrees(): Promise<LinktreeDoc[]> {
-  const snaps = await getDocs(
-    query(linktreesRef(), orderBy("updatedAt", "desc"))
+/**
+ * Lista os linktrees visíveis ao gestor. Admin vê tudo; gestor comum vê os
+ * próprios + os sem dono ("") — duas consultas por igualdade (sem orderBy,
+ * que exigiria índice composto), ordenadas client-side.
+ */
+export async function listLinktrees(
+  userEmail: string,
+  isAdmin: boolean
+): Promise<LinktreeDoc[]> {
+  if (isAdmin) {
+    const snaps = await getDocs(
+      query(linktreesRef(), orderBy("updatedAt", "desc"))
+    );
+    return snaps.docs.map(fromSnapshot);
+  }
+
+  const email = userEmail.toLowerCase();
+  const [mine, unclaimed] = await Promise.all([
+    getDocs(query(linktreesRef(), where("ownerEmail", "==", email))),
+    getDocs(query(linktreesRef(), where("ownerEmail", "==", ""))),
+  ]);
+  const byId = new Map(
+    [...mine.docs, ...unclaimed.docs].map((snap) => [
+      snap.id,
+      fromSnapshot(snap),
+    ])
   );
-  return snaps.docs.map(fromSnapshot);
+  return [...byId.values()].sort(
+    (a, b) => (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0)
+  );
 }
 
 export async function updateLinktree(
@@ -197,20 +226,51 @@ export async function duplicateLinktree(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     updatedBy: userEmail,
+    ownerEmail: userEmail.toLowerCase(),
     deletedAt: null,
     lastExportedAt: null,
   });
   return created.id;
 }
 
-/** true se outro linktree (diferente de excludeId) já usa este slug. */
+/**
+ * true se outro linktree (diferente de excludeId) já usa este slug.
+ * Gestor comum só consegue consultar os docs que enxerga (as rules não
+ * filtram consultas amplas) — a checagem cobre os dele + os sem dono.
+ */
 export async function isSlugTaken(
   slug: string,
-  excludeId: string
+  excludeId: string,
+  userEmail: string,
+  isAdmin: boolean
 ): Promise<boolean> {
   if (!slug) return false;
-  const snaps = await getDocs(
-    query(linktreesRef(), where("slug", "==", slug), limit(2))
+  if (isAdmin) {
+    const snaps = await getDocs(
+      query(linktreesRef(), where("slug", "==", slug), limit(2))
+    );
+    return snaps.docs.some((snap) => snap.id !== excludeId);
+  }
+  const email = userEmail.toLowerCase();
+  const [mine, unclaimed] = await Promise.all([
+    getDocs(
+      query(
+        linktreesRef(),
+        where("slug", "==", slug),
+        where("ownerEmail", "==", email),
+        limit(2)
+      )
+    ),
+    getDocs(
+      query(
+        linktreesRef(),
+        where("slug", "==", slug),
+        where("ownerEmail", "==", ""),
+        limit(2)
+      )
+    ),
+  ]);
+  return [...mine.docs, ...unclaimed.docs].some(
+    (snap) => snap.id !== excludeId
   );
-  return snaps.docs.some((snap) => snap.id !== excludeId);
 }

@@ -7,6 +7,49 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/managers/$(request.auth.token.email));
     }
 
+    // Papel definido só pelo console: managers/{email}.role == "admin".
+    function isAdmin() {
+      return isManager()
+        && get(/databases/$(database)/documents/managers/$(request.auth.token.email))
+          .data.get('role', '') == 'admin';
+    }
+
+    // Escrita/exclusão: dono, legado sem dono (""/ausente) ou admin.
+    function canTouch() {
+      return isAdmin()
+        || resource.data.get('ownerEmail', '') in [request.auth.token.email, ''];
+    }
+
+    // ownerEmail é imutável, com uma exceção: reivindicar legado
+    // (vazio/ausente -> próprio e-mail). Admin pode reatribuir.
+    function ownerChangeAllowed() {
+      return request.resource.data.get('ownerEmail', '') == resource.data.get('ownerEmail', '')
+        || (resource.data.get('ownerEmail', '') == ''
+          && request.resource.data.get('ownerEmail', '') == request.auth.token.email)
+        || isAdmin();
+    }
+
+    // Tipos e tamanhos do documento resultante. Campos das sprints 6-9
+    // são opcionais (docs legados podem não os ter até a primeira edição).
+    function validLinktree() {
+      let d = request.resource.data;
+      return d.clientName is string && d.clientName.size() <= 120
+        && d.slug is string && d.slug.size() <= 80 && d.slug.matches('[a-z0-9-]*')
+        && d.bio is string && d.bio.size() <= 160
+        && d.templateId is string && d.templateId.size() <= 40
+        && d.palette is map
+        && d.links is list && d.links.size() <= 60
+        && (d.photoUrl == null || (d.photoUrl is string && d.photoUrl.size() < 1000000))
+        && d.status in ['rascunho', 'publicado']
+        && d.get('socials', []) is list
+        && d.get('publishedUrl', '') is string
+        && d.get('publishedUrl', '').size() <= 300
+        && d.get('contact', {}) is map
+        && d.get('tracking', {}) is map
+        && d.get('fontId', '') is string && d.get('fontId', '').size() <= 40
+        && d.get('ownerEmail', '') is string;
+    }
+
     // Allowlist de gestores: doc ID = e-mail em lowercase.
     // Escrita apenas pelo console Firebase (nunca pelo app).
     match /managers/{email} {
@@ -15,7 +58,18 @@ service cloud.firestore {
     }
 
     match /linktrees/{id} {
-      allow read, write: if isManager();
+      // Igualdade direta (sem get()) para o Firestore conseguir provar as
+      // consultas por dono do painel (where ownerEmail == meu / == "").
+      allow read: if isManager()
+        && (isAdmin()
+          || resource.data.ownerEmail == request.auth.token.email
+          || resource.data.ownerEmail == '');
+      allow create: if isManager() && validLinktree()
+        && (isAdmin()
+          || request.resource.data.ownerEmail == request.auth.token.email);
+      allow update: if isManager() && canTouch() && validLinktree()
+        && ownerChangeAllowed();
+      allow delete: if isManager() && canTouch();
     }
   }
 }
