@@ -1,5 +1,5 @@
 import type { TemplateProps } from "@/templates/types";
-import { initials, linkItemHref, youtubeVideoId } from "@/lib/utils";
+import { initials, linkItemHref, scheduleAttrs, youtubeVideoId } from "@/lib/utils";
 
 /** Template Gradiente: fundo em gradiente escuro com cartões de vidro (glassmorphism). */
 export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
@@ -48,7 +48,11 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
 
           if (type === "header") {
             return (
-              <div key={item.id} className="glass-section">
+              <div
+                key={item.id}
+                className="glass-section"
+                {...scheduleAttrs(item)}
+              >
                 {item.label}
               </div>
             );
@@ -64,6 +68,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
                 href={item.url}
                 target="_blank"
                 rel="noopener"
+                {...scheduleAttrs(item)}
               >
                 <img
                   className="glass-video-thumb"
@@ -85,6 +90,7 @@ export function Template({ config, photoSrc, vcardSrc }: TemplateProps) {
               href={linkItemHref(item)}
               target="_blank"
               rel="noopener"
+              {...scheduleAttrs(item)}
             >
               <span className="card-icon">
                 <i className={`ti ti-${item.icon}`} />

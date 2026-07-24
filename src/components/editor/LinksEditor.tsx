@@ -35,9 +35,13 @@ const ADD_OPTIONS: {
 export function LinksEditor({ value, onChange }: SectionProps) {
   const links = value.links;
 
-  /** Toda operação envia o array completo de links no patch. */
+  /**
+   * Toda operação envia o array completo de links no patch.
+   * O round-trip por JSON descarta propriedades `undefined` (ex.: data de
+   * agendamento limpa), que o Firestore rejeita no updateDoc.
+   */
   function commit(nextLinks: LinkItem[]) {
-    onChange({ links: nextLinks });
+    onChange({ links: JSON.parse(JSON.stringify(nextLinks)) });
   }
 
   function handleAdd(type: LinkItemType, defaults: Pick<LinkItem, "label" | "icon">) {

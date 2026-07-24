@@ -53,6 +53,11 @@ function fromSnapshot(snap: QueryDocumentSnapshot): LinktreeDoc {
       email: data.contact?.email ?? "",
       org: data.contact?.org ?? "",
     },
+    tracking: {
+      ga4Id: data.tracking?.ga4Id ?? "",
+      metaPixelId: data.tracking?.metaPixelId ?? "",
+      gtmId: data.tracking?.gtmId ?? "",
+    },
     photoUrl: data.photoUrl ?? null,
     status: data.status ?? "rascunho",
     createdAt: data.createdAt ?? null,
@@ -79,6 +84,7 @@ export async function createLinktree(
     socials: [],
     publishedUrl: "",
     contact: { phone: "", email: "", org: "" },
+    tracking: { ga4Id: "", metaPixelId: "", gtmId: "" },
     photoUrl: null,
     status: "rascunho",
     createdAt: serverTimestamp(),
@@ -134,9 +140,10 @@ export async function duplicateLinktree(
       ...social,
       id: crypto.randomUUID(),
     })),
-    // A cópia será publicada em outra URL; contato acompanha o cliente.
+    // A cópia será publicada em outra URL; contato e pixels acompanham o cliente.
     publishedUrl: "",
     contact: { ...source.contact },
+    tracking: { ...source.tracking },
     photoUrl: source.photoUrl,
     status: "rascunho",
     createdAt: serverTimestamp(),
