@@ -1,5 +1,10 @@
 # Roadmap — Linktree E3
 
+> **Status: CONCLUÍDO em 25/07/2026** — Sprints 6 a 11 entregues (PRs #7 a #12 na `developer`).
+> Ajustes de escopo feitos durante a execução: na Sprint 11, o isolamento de leitura
+> exigiu consultas por dono no painel (rules do Firestore não filtram consultas) e o
+> legado sem `ownerEmail` é reivindicado automaticamente ao abrir no editor.
+
 Roadmap de evolução do produto, baseado em análise de apps consolidados do mesmo nicho (Linktree, Beacons, Bento, Taplink, Lnk.bio) e nas restrições do projeto.
 
 **Decisões de escopo:**
@@ -53,7 +58,7 @@ Roadmap de evolução do produto, baseado em análise de apps consolidados do me
 
 Cada sprint: 1 branch `feat/*`, merge em `developer` → `main`, deploy do painel ao final.
 
-### Sprint 6 — `feat/export-pro` (SEO, QR e vCard)
+### ✅ Sprint 6 — `feat/export-pro` (SEO, QR e vCard)
 
 *O HTML exportado fica no nível dos concorrentes em compartilhamento e descoberta.* Features #1–#5.
 
@@ -72,7 +77,7 @@ Cada sprint: 1 branch `feat/*`, merge em `developer` → `main`, deploy do paine
 
 **Aceite:** ZIP contém `index.html`, `foto.jpg`, `favicon.png`, `qrcode.png`, `contato.vcf`; validador OG mostra imagem/título; QR escaneado abre `publishedUrl`.
 
-### Sprint 7 — `feat/blocos` (novos tipos de bloco)
+### ✅ Sprint 7 — `feat/blocos` (novos tipos de bloco)
 
 *Sai de "lista de links" para página de bio completa.* Features #6–#8.
 
@@ -90,7 +95,7 @@ Cada sprint: 1 branch `feat/*`, merge em `developer` → `main`, deploy do paine
 
 **Aceite:** cada tipo renderiza nos 5 templates; docs antigos continuam funcionando; export idêntico ao preview.
 
-### Sprint 8 — `feat/analytics-agendamento` (pixels e agendamento)
+### ✅ Sprint 8 — `feat/analytics-agendamento` (pixels e agendamento)
 
 *Cliente mede tráfego nas ferramentas dele; links entram/saem do ar sozinhos.* Features #9–#11.
 
@@ -108,7 +113,7 @@ Cada sprint: 1 branch `feat/*`, merge em `developer` → `main`, deploy do paine
 
 **Aceite:** IDs presentes geram os scripts (ausentes não geram nada); link com `endAt` no passado não aparece; avisos aparecem no modal de export.
 
-### Sprint 9 — `feat/editor-ux` (produtividade do editor)
+### ✅ Sprint 9 — `feat/editor-ux` (produtividade do editor)
 
 Features #12–#15.
 
@@ -121,7 +126,7 @@ Features #12–#15.
 
 **Aceite:** arrastar reordena e persiste; preview alterna larguras; fonte muda no preview e no ZIP; Ctrl+Z reverte remoção de link.
 
-### Sprint 10 — `feat/painel-pro` (organização do painel)
+### ✅ Sprint 10 — `feat/painel-pro` (organização do painel)
 
 Features #16–#18.
 
@@ -135,7 +140,7 @@ Features #16–#18.
 
 **Aceite:** busca/filtros funcionam com 20+ docs; excluído restaura da lixeira; badge aparece após editar linktree já exportado.
 
-### Sprint 11 — `feat/seguranca` (ownership e rules)
+### ✅ Sprint 11 — `feat/seguranca` (ownership e rules)
 
 Features #19–#20.
 
