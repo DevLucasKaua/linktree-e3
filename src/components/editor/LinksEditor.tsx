@@ -1,25 +1,60 @@
 "use client";
 
-import type { LinkItem } from "@/templates/types";
+import { useRef } from "react";
+import type { LinkItem, LinkItemType } from "@/templates/types";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { LinkItemForm } from "@/components/editor/LinkItemForm";
 
+/** Padrões de cada tipo de bloco no menu de adicionar. */
+const ADD_OPTIONS: {
+  type: LinkItemType;
+  buttonLabel: string;
+  defaults: Pick<LinkItem, "label" | "icon">;
+}[] = [
+  {
+    type: "link",
+    buttonLabel: "+ Link",
+    defaults: { label: "Novo link", icon: "link" },
+  },
+  {
+    type: "header",
+    buttonLabel: "+ Cabeçalho",
+    defaults: { label: "Nova seção", icon: "heading" },
+  },
+  {
+    type: "whatsapp",
+    buttonLabel: "+ WhatsApp",
+    defaults: { label: "Fale no WhatsApp", icon: "brand-whatsapp" },
+  },
+  {
+    type: "youtube",
+    buttonLabel: "+ Vídeo",
+    defaults: { label: "Assista no YouTube", icon: "brand-youtube" },
+  },
+];
+
 export function LinksEditor({ value, onChange }: SectionProps) {
   const links = value.links;
+  // Índice do bloco sendo arrastado; a lista é reordenada ao vivo no dragEnter.
+  const dragFrom = useRef<number | null>(null);
 
-  /** Toda operação envia o array completo de links no patch. */
+  /**
+   * Toda operação envia o array completo de links no patch.
+   * O round-trip por JSON descarta propriedades `undefined` (ex.: data de
+   * agendamento limpa), que o Firestore rejeita no updateDoc.
+   */
   function commit(nextLinks: LinkItem[]) {
-    onChange({ links: nextLinks });
+    onChange({ links: JSON.parse(JSON.stringify(nextLinks)) });
   }
 
-  function handleAdd() {
+  function handleAdd(type: LinkItemType, defaults: Pick<LinkItem, "label" | "icon">) {
     commit([
       ...links,
       {
         id: crypto.randomUUID(),
-        label: "Novo link",
+        type,
+        ...defaults,
         description: "",
-        icon: "link",
         url: "",
         active: true,
       },
@@ -51,13 +86,31 @@ export function LinksEditor({ value, onChange }: SectionProps) {
     commit(next);
   }
 
+  function handleDragStart(index: number) {
+    dragFrom.current = index;
+  }
+
+  function handleDragEnter(index: number) {
+    const from = dragFrom.current;
+    if (from === null || from === index) return;
+    const next = [...links];
+    const [moved] = next.splice(from, 1);
+    next.splice(index, 0, moved);
+    dragFrom.current = index;
+    commit(next);
+  }
+
+  function handleDragEnd() {
+    dragFrom.current = null;
+  }
+
   return (
     <section className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
-      <h2 className="font-semibold">Links</h2>
+      <h2 className="font-semibold">Links e blocos</h2>
 
       {links.length === 0 ? (
         <p className="text-sm text-muted">
-          Nenhum link ainda — adicione o primeiro.
+          Nenhum bloco ainda — adicione o primeiro.
         </p>
       ) : (
         <div className="flex flex-col gap-3">
@@ -71,18 +124,26 @@ export function LinksEditor({ value, onChange }: SectionProps) {
               onRemove={() => handleRemove(index)}
               onDuplicate={() => handleDuplicate(index)}
               onMove={(direction) => handleMove(index, direction)}
+              onDragStart={() => handleDragStart(index)}
+              onDragEnter={() => handleDragEnter(index)}
+              onDragEnd={handleDragEnd}
             />
           ))}
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleAdd}
-        className="self-start rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
-      >
-        + Adicionar link
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        {ADD_OPTIONS.map(({ type, buttonLabel, defaults }) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => handleAdd(type, defaults)}
+            className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
+          >
+            {buttonLabel}
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

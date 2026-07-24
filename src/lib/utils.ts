@@ -1,4 +1,4 @@
-import type { UtmParams } from "@/templates/types";
+import type { LinkItem, UtmParams } from "@/templates/types";
 
 /** Anexa parâmetros UTM preenchidos à URL, preservando query string existente. */
 export function buildUrlWithUtms(url: string, utm?: UtmParams): string {
@@ -11,6 +11,85 @@ export function buildUrlWithUtms(url: string, utm?: UtmParams): string {
     return parsed.toString();
   } catch {
     return url;
+  }
+}
+
+/** Monta o link wa.me a partir do número (só dígitos) e da mensagem opcional. */
+export function buildWhatsAppUrl(phone: string, message?: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const base = `https://wa.me/${digits}`;
+  const text = message?.trim();
+  return text ? `${base}?text=${encodeURIComponent(text)}` : base;
+}
+
+/** Extrai o ID de vídeo de URLs do YouTube (watch, youtu.be, shorts, embed, live). */
+export function youtubeVideoId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^(www|m|music)\./, "");
+    const isValidId = (id: string | null) =>
+      id && /^[\w-]{6,}$/.test(id) ? id : null;
+    if (host === "youtu.be") {
+      return isValidId(parsed.pathname.slice(1).split("/")[0]);
+    }
+    if (host === "youtube.com") {
+      if (parsed.pathname === "/watch") {
+        return isValidId(parsed.searchParams.get("v"));
+      }
+      const match = parsed.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]+)/);
+      return isValidId(match?.[1] ?? null);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** href final de um bloco: wa.me para WhatsApp, URL com UTMs para os demais. */
+export function linkItemHref(item: LinkItem): string {
+  if (item.type === "whatsapp") return buildWhatsAppUrl(item.url, item.message);
+  return buildUrlWithUtms(item.url, item.utm);
+}
+
+/** Formatos aceitos dos IDs de rastreamento (editor valida, render só injeta se casar). */
+export const TRACKING_PATTERNS = {
+  ga4Id: /^G-[A-Z0-9]{4,}$/i,
+  metaPixelId: /^\d{5,20}$/,
+  gtmId: /^GTM-[A-Z0-9]{4,}$/i,
+} as const;
+
+/** true se o bloco está dentro da janela de agendamento no instante `now`. */
+export function isWithinSchedule(item: LinkItem, now: Date): boolean {
+  if (item.startAt && now < new Date(`${item.startAt}T00:00:00`)) return false;
+  if (item.endAt && now > new Date(`${item.endAt}T23:59:59`)) return false;
+  return true;
+}
+
+/**
+ * Atributos de agendamento do bloco: data-start/data-end para o script da
+ * página e `hidden` refletindo o estado no momento da renderização (o script
+ * corrige na abertura — a página estática pode ficar dias no ar).
+ */
+export function scheduleAttrs(item: LinkItem): {
+  "data-start"?: string;
+  "data-end"?: string;
+  hidden?: boolean;
+} {
+  if (!item.startAt && !item.endAt) return {};
+  return {
+    ...(item.startAt ? { "data-start": item.startAt } : {}),
+    ...(item.endAt ? { "data-end": item.endAt } : {}),
+    ...(isWithinSchedule(item, new Date()) ? {} : { hidden: true }),
+  };
+}
+
+/** true se a URL é http(s) válida (validação dos campos de URL do editor). */
+export function isValidHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
   }
 }
 
