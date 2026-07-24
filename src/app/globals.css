@@ -1,30 +1,144 @@
 @import "tailwindcss";
 
-/* Tokens do painel admin — identidade E3 (escuro + laranja) */
+/*
+ * Tokens do painel admin — linguagem KAPTA (claro/escuro via [data-theme]).
+ * O laranja E3 #ff6a00 permanece só nos templates exportados dos clientes;
+ * o painel usa o acento #FF4D00 com variantes soft/deep.
+ */
 :root {
-  --background: #0a0a0a;
-  --surface: #141414;
-  --border: #262626;
-  --foreground: #ededed;
-  --muted: #8a8a8a;
-  --accent: #ff6a00;
-  --accent-hover: #ff8534;
+  --bg: #f4f3f3;
+  --surface: #ffffff;
+  --ink: #1d1c1b;
+  --muted: #8e8d8a;
+  --soft: #6b6965;
+  --hair: #e4e2df;
+  --hover: #ebeae8;
+  --active: #e0dfde;
+  --seg: #ecebe9;
+  --accent: #ff4d00;
+  --accent-soft: #ffd9c5;
+  --accent-deep: #c23a00;
+  --pos: #2e6b0e;
+  --neg: #c21b1b;
+  --warn: #8f5f00;
+  --warn-soft: #f6e8cd;
+  --gridline: rgba(29, 28, 27, 0.05);
+  --elev-1: 0 4px 16px rgba(29, 28, 27, 0.07);
+  --elev-2: 0 24px 48px rgba(29, 28, 27, 0.18);
+}
+
+[data-theme="dark"] {
+  --bg: #141312;
+  --surface: #1e1d1b;
+  --ink: #f4f3f2;
+  --muted: #8b8984;
+  --soft: #a5a29c;
+  --hair: #2e2c29;
+  --hover: #282623;
+  --active: #33312e;
+  --seg: #26241f;
+  --accent: #ff5a14;
+  --accent-soft: #3d1f0c;
+  --accent-deep: #ff9e66;
+  --pos: #93d06b;
+  --neg: #ff7a70;
+  --warn: #e0b354;
+  --warn-soft: #3a2d10;
+  --gridline: rgba(255, 255, 255, 0.05);
+  --elev-1: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --elev-2: 0 24px 48px rgba(0, 0, 0, 0.55);
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-border: var(--border);
-  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-soft: var(--soft);
+  --color-hair: var(--hair);
+  --color-hover: var(--hover);
+  --color-active: var(--active);
+  --color-seg: var(--seg);
   --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-deep: var(--accent-deep);
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --shadow-card: var(--elev-1);
+  --shadow-big: var(--elev-2);
+  --shadow-seg: 0 1px 3px rgba(0, 0, 0, 0.12);
+
+  --animate-pop: pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-rise: rise 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  --animate-menu-in: menu-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-toast-in: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+@keyframes menu-in {
+  from {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes toast-in {
+  from {
+    transform: translate(-50%, 80px);
+  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Micro-grid sutil do shell (referência KAPTA) */
+  background-image:
+    linear-gradient(var(--gridline) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gridline) 1px, transparent 1px);
+  background-size: 22px 22px;
+  transition:
+    background-color 0.25s,
+    color 0.25s;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

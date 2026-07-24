@@ -4,6 +4,9 @@ import type { SectionProps } from "@/components/editor/EditorShell";
 import { getTemplate } from "@/templates/registry";
 import { FONTS } from "@/templates/fonts";
 import type { Palette } from "@/templates/types";
+import { Section } from "@/components/ui/Section";
+import { Field, FieldLabel, Input, Select } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
 
 /** Rótulos pt-BR para cada chave fixa da paleta. */
 const PALETTE_LABELS: Record<keyof Palette, string> = {
@@ -33,25 +36,20 @@ export function PaletteEditor({ value, onChange }: SectionProps) {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-surface p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Aparência</h2>
-        <button
-          type="button"
-          onClick={restoreDefaults}
-          className="rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
-        >
+    <Section
+      title="Aparência"
+      action={
+        <Button onClick={restoreDefaults}>
+          <i className="ti ti-restore" />
           Restaurar cores do template
-        </button>
-      </div>
-
+        </Button>
+      }
+    >
       {/* Fonte do site (Google Fonts, injetada no export) */}
-      <label className="mb-4 flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Fonte</span>
-        <select
+      <Field label="Fonte">
+        <Select
           value={value.fontId}
           onChange={(event) => onChange({ fontId: event.target.value })}
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         >
           <option value="">Padrão do template</option>
           {FONTS.map((font) => (
@@ -59,39 +57,38 @@ export function PaletteEditor({ value, onChange }: SectionProps) {
               {font.name}
             </option>
           ))}
-        </select>
-      </label>
+        </Select>
+      </Field>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {PALETTE_KEYS.map((key) => {
           const colorValue = value.palette[key];
           return (
             <label key={key} className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">{PALETTE_LABELS[key]}</span>
+              <FieldLabel>{PALETTE_LABELS[key]}</FieldLabel>
               {isHex(colorValue) ? (
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
                     value={colorValue}
                     onChange={(event) => setColor(key, event.target.value)}
-                    className="h-9 w-12 cursor-pointer rounded-md border border-border bg-background p-1"
+                    className="h-9 w-12 cursor-pointer rounded-lg border border-hair bg-bg p-1"
                   />
                   <span className="font-mono text-sm text-muted">
                     {colorValue}
                   </span>
                 </div>
               ) : (
-                <input
-                  type="text"
+                <Input
                   value={colorValue}
                   onChange={(event) => setColor(key, event.target.value)}
-                  className="rounded-md border border-border bg-background px-3 py-2 font-mono text-sm outline-none transition-colors focus:border-accent"
+                  className="font-mono"
                 />
               )}
             </label>
           );
         })}
       </div>
-    </section>
+    </Section>
   );
 }

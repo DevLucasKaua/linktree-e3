@@ -4,6 +4,9 @@ import type { SocialLink } from "@/templates/types";
 import type { SectionProps } from "@/components/editor/EditorShell";
 import { IconPicker } from "@/components/editor/IconPicker";
 import { isValidHttpUrl } from "@/lib/utils";
+import { Section } from "@/components/ui/Section";
+import { Input } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
 
 /** Seção "Redes sociais": linha de ícones exibida abaixo da bio na página. */
 export function SocialsEditor({ value, onChange }: SectionProps) {
@@ -33,15 +36,17 @@ export function SocialsEditor({ value, onChange }: SectionProps) {
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
-      <div>
-        <h2 className="font-semibold">Redes sociais</h2>
-        <p className="mt-1 text-sm text-muted">
-          Linha de ícones exibida abaixo da bio. Redes sem URL não aparecem.
-        </p>
-      </div>
-
-      {socials.length > 0 && (
+    <Section
+      title="Redes sociais"
+      description="Linha de ícones exibida abaixo da bio. Redes sem URL não aparecem."
+      action={
+        <Button onClick={handleAdd}>
+          <i className="ti ti-plus" />
+          Adicionar rede
+        </Button>
+      }
+    >
+      {socials.length > 0 ? (
         <div className="flex flex-col gap-2">
           {socials.map((social, index) => {
             const urlInvalid =
@@ -53,31 +58,27 @@ export function SocialsEditor({ value, onChange }: SectionProps) {
                     value={social.icon}
                     onSelect={(icon) => handleUpdate(index, { icon })}
                   />
-                  <input
+                  <Input
                     type="url"
+                    invalid={urlInvalid}
                     value={social.url}
                     onChange={(event) =>
                       handleUpdate(index, { url: event.target.value })
                     }
                     placeholder="https://instagram.com/cliente"
                     aria-label="URL da rede social"
-                    className={`min-w-0 flex-1 rounded-md border bg-transparent px-3 py-1.5 text-sm outline-none transition-colors ${
-                      urlInvalid
-                        ? "border-red-400 focus:border-red-400"
-                        : "border-border focus:border-accent"
-                    }`}
+                    className="flex-1 py-1.5"
                   />
-                  <button
-                    type="button"
+                  <Button
+                    variant="iconDanger"
                     onClick={() => handleRemove(index)}
                     title="Remover rede social"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border text-red-400 transition-colors hover:border-red-400"
                   >
                     <i className="ti ti-trash" />
-                  </button>
+                  </Button>
                 </div>
                 {urlInvalid && (
-                  <span className="text-xs text-red-400">
+                  <span className="text-xs text-neg">
                     URL inválida — precisa começar com https:// (ou http://).
                   </span>
                 )}
@@ -85,15 +86,11 @@ export function SocialsEditor({ value, onChange }: SectionProps) {
             );
           })}
         </div>
+      ) : (
+        <p className="text-sm text-muted">
+          Nenhuma rede ainda — adicione a primeira.
+        </p>
       )}
-
-      <button
-        type="button"
-        onClick={handleAdd}
-        className="self-start rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:border-accent"
-      >
-        + Adicionar rede
-      </button>
-    </section>
+    </Section>
   );
 }
