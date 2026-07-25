@@ -16,11 +16,18 @@ export default function LoginPage() {
     <main className="flex flex-1 items-center justify-center p-6">
       <div className="glass flex w-full max-w-sm animate-pop flex-col items-center gap-7 rounded-[20px] border border-hair bg-surface p-8 shadow-big">
         <div className="flex flex-col items-center gap-3 text-center">
+          {/* Wordmark por tema: texto escuro no claro, texto claro no escuro */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-wordmark.svg"
             alt="E3 Digital"
-            className="h-9 w-auto"
+            className="h-9 w-auto [[data-theme=dark]_&]:hidden"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-wordmark-dark.svg"
+            alt="E3 Digital"
+            className="hidden h-9 w-auto [[data-theme=dark]_&]:block"
           />
           <h1 className="text-2xl font-semibold tracking-tight">
             Painel de bio-links

@@ -67,7 +67,7 @@ export function IconPicker({
         onClick={() => setOpen((current) => !current)}
         title="Trocar ícone"
         aria-expanded={open}
-        className="glass pressable flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-hair bg-field transition-colors hover:bg-hover"
+        className="glass pressable flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-hair bg-field hover:bg-hover"
       >
         <i className={`ti ti-${value}`} />
       </button>

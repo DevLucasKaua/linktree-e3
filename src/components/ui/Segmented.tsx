@@ -33,7 +33,7 @@ export function Segmented<T extends string>({
           type="button"
           title={option.title}
           onClick={() => onChange(option.value)}
-          className={`pressable flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
+          className={`pressable flex cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm ${
             grow ? "flex-1" : ""
           } ${
             value === option.value

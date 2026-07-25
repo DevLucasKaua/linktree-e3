@@ -79,6 +79,7 @@ export function ClientForm({ value, onChange }: SectionProps) {
             value={value.clientName}
             onChange={(event) => handleNameChange(event.target.value)}
             placeholder="Ex: Dra. Ana Beatriz Rocha"
+            maxLength={120}
           />
         </Field>
 
@@ -95,6 +96,7 @@ export function ClientForm({ value, onChange }: SectionProps) {
               onChange={(event) => setSlugDraft(event.target.value)}
               onBlur={handleSlugBlur}
               placeholder="ex: ana-beatriz-rocha"
+              maxLength={80}
               className="min-w-0 flex-1 bg-transparent px-3 py-2 font-mono text-sm outline-none placeholder:text-muted"
             />
           </div>

@@ -5,7 +5,8 @@ import { getTemplate } from "@/templates/registry";
 import { FONTS } from "@/templates/fonts";
 import type { Palette } from "@/templates/types";
 import { Section } from "@/components/ui/Section";
-import { Field, FieldLabel, Input, Select } from "@/components/ui/Field";
+import { FieldLabel, Input } from "@/components/ui/Field";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Button } from "@/components/ui/Button";
 
 /** Rótulos pt-BR para cada chave fixa da paleta. */
@@ -45,20 +46,20 @@ export function PaletteEditor({ value, onChange }: SectionProps) {
         </Button>
       }
     >
-      {/* Fonte do site (Google Fonts, injetada no export) */}
-      <Field label="Fonte">
-        <Select
+      {/* Fonte do site (Google Fonts, injetada no export).
+          Div em vez de <label>: o gatilho do Dropdown é um botão. */}
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <FieldLabel>Fonte</FieldLabel>
+        <Dropdown
+          label="Fonte"
           value={value.fontId}
-          onChange={(event) => onChange({ fontId: event.target.value })}
-        >
-          <option value="">Padrão do template</option>
-          {FONTS.map((font) => (
-            <option key={font.id} value={font.id}>
-              {font.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
+          onChange={(fontId) => onChange({ fontId })}
+          options={[
+            { value: "", label: "Padrão do template" },
+            ...FONTS.map((font) => ({ value: font.id, label: font.name })),
+          ]}
+        />
+      </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {PALETTE_KEYS.map((key) => {

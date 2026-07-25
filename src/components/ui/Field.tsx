@@ -1,7 +1,6 @@
 import type {
   InputHTMLAttributes,
   ReactNode,
-  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
 
@@ -53,19 +52,6 @@ export function Input({
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }) {
   return <input className={`${controlClass(invalid)} ${className}`} {...props} />;
-}
-
-export function Select({
-  invalid,
-  className = "",
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement> & { invalid?: boolean }) {
-  return (
-    <select
-      className={`${controlClass(invalid)} cursor-pointer ${className}`}
-      {...props}
-    />
-  );
 }
 
 export function Textarea({

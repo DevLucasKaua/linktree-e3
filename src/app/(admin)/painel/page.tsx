@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Timestamp } from "firebase/firestore";
 import {
+  batchDelete,
+  batchRestore,
+  batchSoftDelete,
   deleteLinktree,
   duplicateLinktree,
   hasUnexportedChanges,
@@ -28,7 +31,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Menu } from "@/components/ui/Menu";
 import { Segmented } from "@/components/ui/Segmented";
-import { Select } from "@/components/ui/Field";
+import { Dropdown } from "@/components/ui/Dropdown";
 
 type Tab = "ativos" | "lixeira";
 type SortKey = "updated" | "name" | "created";
@@ -55,11 +58,30 @@ export default function PainelPage() {
   const [statusFilter, setStatusFilter] = useState("todos");
   const [templateFilter, setTemplateFilter] = useState("todos");
   const [sortKey, setSortKey] = useState<SortKey>("updated");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user?.email) return;
     listLinktrees(user.email, isAdmin).then(setLinktrees);
   }, [user?.email, isAdmin]);
+
+  // Seleção em massa não sobrevive a mudança de contexto (aba/filtros) —
+  // ajuste durante o render, sem efeito (react.dev/you-might-not-need-an-effect).
+  const filterSignature = `${tab}|${search}|${statusFilter}|${templateFilter}`;
+  const [prevSignature, setPrevSignature] = useState(filterSignature);
+  if (prevSignature !== filterSignature) {
+    setPrevSignature(filterSignature);
+    if (selected.size > 0) setSelected(new Set());
+  }
+
+  function toggleSelected(id: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   /** Atualiza um item na lista local sem refetch. */
   function patchLocal(id: string, changes: Partial<LinktreeDoc>) {
@@ -197,6 +219,53 @@ export default function PainelPage() {
     toast("Linktree excluído definitivamente.");
   }
 
+  async function handleBulkTrash() {
+    const ids = [...selected];
+    await batchSoftDelete(ids);
+    const now = Timestamp.now();
+    setLinktrees((current) =>
+      (current ?? []).map((item) =>
+        ids.includes(item.id) ? { ...item, deletedAt: now } : item
+      )
+    );
+    setSelected(new Set());
+    toast(`${ids.length} movido(s) para a lixeira.`);
+  }
+
+  async function handleBulkRestore() {
+    const ids = [...selected];
+    await batchRestore(ids);
+    setLinktrees((current) =>
+      (current ?? []).map((item) =>
+        ids.includes(item.id) ? { ...item, deletedAt: null } : item
+      )
+    );
+    setSelected(new Set());
+    toast(`${ids.length} restaurado(s).`);
+  }
+
+  async function handleBulkDelete() {
+    const ids = [...selected];
+    const confirmed = await confirmDialog({
+      title: "Excluir definitivamente?",
+      message: `${ids.length} linktree(s) serão apagados para sempre. Essa ação não pode ser desfeita.`,
+      confirmLabel: "Excluir para sempre",
+      danger: true,
+    });
+    if (!confirmed) return;
+    await batchDelete(ids);
+    const emptiedTrash = ids.length === trashedCount;
+    setLinktrees((current) =>
+      (current ?? []).filter((item) => !ids.includes(item.id))
+    );
+    setSelected(new Set());
+    toast(
+      emptiedTrash
+        ? "Lixeira esvaziada."
+        : `${ids.length} excluído(s) definitivamente.`
+    );
+  }
+
   const activesEmpty =
     (linktrees ?? []).filter((item) => !item.deletedAt).length === 0;
 
@@ -245,50 +314,51 @@ export default function PainelPage() {
         ))}
       </div>
 
-      {/* Busca, filtros e ordenação (chips glass) */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 sm:max-w-xs">
-          <i className="ti ti-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+      {/* Busca maior + filtros distribuídos lado a lado (tudo em vidro) */}
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+        <div className="relative min-w-0 lg:flex-[2]">
+          <i className="ti ti-search pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar por nome ou slug…"
-            className="glass w-full rounded-full border border-hair bg-field py-2 pl-9 pr-4 text-sm outline-none transition-[border-color,box-shadow] placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)]"
+            className="glass w-full rounded-full border border-hair bg-field py-2 pl-10 pr-4 text-sm outline-none transition-[border-color,box-shadow] placeholder:text-muted focus:border-accent focus:shadow-[0_0_0_3px_var(--accent-soft)]"
           />
         </div>
-        <Select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-          className="w-auto"
-        >
-          <option value="todos">Todos os status</option>
-          <option value="publicado">Publicado</option>
-          <option value="rascunho">Rascunho</option>
-        </Select>
-        <Select
-          value={templateFilter}
-          onChange={(event) => setTemplateFilter(event.target.value)}
-          className="w-auto"
-        >
-          <option value="todos">Todos os templates</option>
-          {Object.values(TEMPLATES).map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.name}
-            </option>
-          ))}
-        </Select>
-        <Select
-          value={sortKey}
-          onChange={(event) => setSortKey(event.target.value as SortKey)}
-          className="w-auto"
-        >
-          {SORT_OPTIONS.map(({ key, label }) => (
-            <option key={key} value={key}>
-              {label}
-            </option>
-          ))}
-        </Select>
+        <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3 lg:flex-[3]">
+          <Dropdown
+            label="Filtrar por status"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "todos", label: "Todos os status" },
+              { value: "publicado", label: "Publicado" },
+              { value: "rascunho", label: "Rascunho" },
+            ]}
+          />
+          <Dropdown
+            label="Filtrar por template"
+            value={templateFilter}
+            onChange={setTemplateFilter}
+            options={[
+              { value: "todos", label: "Todos os templates" },
+              ...Object.values(TEMPLATES).map((template) => ({
+                value: template.id,
+                label: template.name,
+              })),
+            ]}
+          />
+          <Dropdown
+            label="Ordenar por"
+            value={sortKey}
+            onChange={setSortKey}
+            options={SORT_OPTIONS.map(({ key, label }) => ({
+              value: key,
+              label,
+            }))}
+          />
+        </div>
       </div>
 
       {linktrees === null ? (
@@ -335,7 +405,7 @@ export default function PainelPage() {
             <Link
               href="/novo"
               aria-label="Criar o primeiro linktree"
-              className="carve pressable absolute -bottom-1.5 -right-1.5 flex h-12 w-12 items-center justify-center rounded-full border border-hair bg-surface-2 text-ink transition-transform hover:scale-105"
+              className="carve pressable absolute -bottom-1.5 -right-1.5 flex h-12 w-12 items-center justify-center rounded-full border border-hair bg-surface-2 text-ink hover:scale-105"
             >
               <i className="ti ti-arrow-up-right text-lg" />
             </Link>
@@ -355,12 +425,30 @@ export default function PainelPage() {
       ) : (
         /* Grid de cards estilo "Documents" */
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {visible.map((linktree, index) => (
+          {visible.map((linktree, index) => {
+            const isSelected = selected.has(linktree.id);
+            return (
             <li
               key={linktree.id}
               style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-              className="glass flex animate-rise flex-col gap-3 rounded-[20px] border border-hair bg-surface p-5 transition-shadow hover:shadow-card"
+              className={`glass relative flex animate-rise flex-col gap-3 rounded-[20px] border bg-surface p-5 transition-shadow hover:shadow-card ${
+                isSelected ? "border-accent/60" : "border-hair"
+              }`}
             >
+              {/* Seleção em massa: círculo discreto cravado no canto do card */}
+              <button
+                type="button"
+                aria-label={isSelected ? "Desmarcar" : "Selecionar"}
+                aria-pressed={isSelected}
+                onClick={() => toggleSelected(linktree.id)}
+                className={`pressable absolute -left-2 -top-2 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border ${
+                  isSelected
+                    ? "border-transparent bg-accent text-white"
+                    : "glass border-hair bg-surface-2 text-transparent hover:text-muted"
+                }`}
+              >
+                <i className="ti ti-check text-xs" />
+              </button>
               <div className="flex items-start gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-hair bg-active">
                   {linktree.photoUrl ? (
@@ -471,8 +559,52 @@ export default function PainelPage() {
                 )}
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
+      )}
+
+      {/* Barra flutuante de ações em massa */}
+      {selected.size > 0 && (
+        <div className="glass-strong fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 animate-toast-in flex-wrap items-center justify-center gap-2 rounded-full border border-hair bg-surface py-2 pl-5 pr-2 shadow-big">
+          <span className="font-mono text-xs text-soft">
+            {selected.size} selecionado{selected.size > 1 ? "s" : ""}
+          </span>
+          {selected.size < visible.length ? (
+            <button
+              type="button"
+              onClick={() => setSelected(new Set(visible.map((i) => i.id)))}
+              className="cursor-pointer rounded-full px-2 py-1 text-xs text-muted transition-colors hover:text-ink"
+            >
+              Selecionar todos ({visible.length})
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="cursor-pointer rounded-full px-2 py-1 text-xs text-muted transition-colors hover:text-ink"
+            >
+              Limpar
+            </button>
+          )}
+          {tab === "ativos" ? (
+            <Button variant="danger" onClick={handleBulkTrash}>
+              <i className="ti ti-trash" />
+              Mover para a lixeira
+            </Button>
+          ) : (
+            <>
+              <Button onClick={handleBulkRestore}>
+                <i className="ti ti-arrow-back-up" />
+                Restaurar
+              </Button>
+              <Button variant="danger" onClick={handleBulkDelete}>
+                <i className="ti ti-trash-x" />
+                Excluir definitivamente
+              </Button>
+            </>
+          )}
+        </div>
       )}
 
       {qrTarget && (

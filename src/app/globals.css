@@ -164,93 +164,109 @@ body {
  * desfoca o fundo E reflete cor/luz ao redor (blur + saturate), fundo em
  * gradiente translúcido, luz interna superior e borda especular de 1px
  * (::before com mask) que brilha no topo-esquerda e retorna no rodapé.
+ *
+ * IMPORTANTE: tudo dentro de @layer components — regras fora de camadas
+ * venceriam QUALQUER utility do Tailwind v4 (cascade layers), e o
+ * position:relative padrão engoliria o `absolute`/`fixed` dos painéis
+ * flutuantes, jogando dropdowns/menus para o fim da página.
  */
-.glass,
-.glass-strong,
-.glass-tint {
-  position: relative;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+@layer components {
+  .glass,
+  .glass-strong,
+  .glass-tint {
+    /* Âncora do ::before; `absolute`/`fixed` (camada utilities) vencem. */
+    position: relative;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
 }
 
-.glass,
-.glass-strong {
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.02)
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 0 24px rgba(255, 255, 255, 0.03);
-}
+@layer components {
+  .glass,
+  .glass-strong {
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 0 24px rgba(255, 255, 255, 0.03);
+  }
 
-/* Camada flutuante (menus, modais, toast, popovers): vidro mais denso */
-.glass-strong {
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0.03)
-  );
-}
+  /* Camada flutuante (menus, modais, toast, popovers): vidro mais denso */
+  .glass-strong {
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.03)
+    );
+  }
 
-/* Vidro tintado no gradiente da marca (primário/CTA — "tint" da doc Apple) */
-.glass-tint {
-  background-image: linear-gradient(
-    135deg,
-    rgba(255, 47, 1, 0.9),
-    rgba(252, 137, 0, 0.88)
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    var(--glow-accent);
-}
+  /* Vidro tintado no gradiente da marca (primário/CTA — "tint" da doc Apple) */
+  .glass-tint {
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 47, 1, 0.9),
+      rgba(252, 137, 0, 0.88)
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      var(--glow-accent);
+  }
 
-/* Borda especular de 1px sobre a borda base, ciente do border-radius */
-.glass::before,
-.glass-strong::before,
-.glass-tint::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 255, 255, 0.07) 38%,
-    transparent 62%,
-    rgba(255, 255, 255, 0.16)
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-}
+  /* Borda especular de 1px sobre a borda base, ciente do border-radius */
+  .glass::before,
+  .glass-strong::before,
+  .glass-tint::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.07) 38%,
+      transparent 62%,
+      rgba(255, 255, 255, 0.16)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
 
-/* "Interactive" da doc Apple: reação fluida ao toque */
-.pressable {
-  transition:
-    transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.15s;
-}
-.pressable:active {
-  transform: scale(0.97);
+  /* "Interactive" da doc Apple: reação fluida ao toque.
+     Cobre também cores — não combinar com utilities transition-* no elemento. */
+  .pressable {
+    transition:
+      transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.15s,
+      background-color 0.15s,
+      border-color 0.15s,
+      color 0.15s;
+  }
+  .pressable:active {
+    transform: scale(0.97);
+  }
 }
 
 /*
  * "Liquid glass": botão circular cravado no canto de um card com
  * overflow-hidden — o anel na cor do backdrop esculpe o recorte côncavo.
  */
-.carve {
-  box-shadow: 0 0 0 10px var(--bg);
+@layer components {
+  .carve {
+    box-shadow: 0 0 0 10px var(--bg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

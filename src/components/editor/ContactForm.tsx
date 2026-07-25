@@ -2,7 +2,7 @@
 
 import type { ContactInfo } from "@/templates/types";
 import type { SectionProps } from "@/components/editor/EditorShell";
-import { isValidHttpUrl } from "@/lib/utils";
+import { isValidHttpUrl, sanitizePhoneInput } from "@/lib/utils";
 import { Section } from "@/components/ui/Section";
 import { Field, Input } from "@/components/ui/Field";
 
@@ -31,6 +31,7 @@ export function ContactForm({ value, onChange }: SectionProps) {
             value={value.publishedUrl}
             onChange={(event) => onChange({ publishedUrl: event.target.value })}
             placeholder="https://cliente.com.br/links"
+            maxLength={300}
           />
         </Field>
 
@@ -38,17 +39,23 @@ export function ContactForm({ value, onChange }: SectionProps) {
           <Field label="Telefone">
             <Input
               type="tel"
+              inputMode="tel"
               value={value.contact.phone}
-              onChange={(event) => updateContact({ phone: event.target.value })}
+              onChange={(event) =>
+                updateContact({ phone: sanitizePhoneInput(event.target.value) })
+              }
               placeholder="+55 11 99999-9999"
+              maxLength={20}
             />
           </Field>
           <Field label="E-mail">
             <Input
               type="email"
+              inputMode="email"
               value={value.contact.email}
               onChange={(event) => updateContact({ email: event.target.value })}
               placeholder="contato@cliente.com.br"
+              maxLength={120}
             />
           </Field>
         </div>
@@ -58,6 +65,7 @@ export function ContactForm({ value, onChange }: SectionProps) {
             value={value.contact.org}
             onChange={(event) => updateContact({ org: event.target.value })}
             placeholder="Ex: Rocha Advocacia"
+            maxLength={80}
           />
         </Field>
 
