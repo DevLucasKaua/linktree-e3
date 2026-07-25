@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  writeBatch,
   getDoc,
   getDocs,
   limit,
@@ -176,6 +177,36 @@ export async function softDeleteLinktree(id: string): Promise<void> {
 
 export async function restoreLinktree(id: string): Promise<void> {
   await updateDoc(doc(getDb(), "linktrees", id), { deletedAt: null });
+}
+
+/** Move vários linktrees para a lixeira numa escrita atômica. */
+export async function batchSoftDelete(ids: string[]): Promise<void> {
+  const db = getDb();
+  const batch = writeBatch(db);
+  for (const id of ids) {
+    batch.update(doc(db, "linktrees", id), { deletedAt: serverTimestamp() });
+  }
+  await batch.commit();
+}
+
+/** Restaura vários linktrees da lixeira numa escrita atômica. */
+export async function batchRestore(ids: string[]): Promise<void> {
+  const db = getDb();
+  const batch = writeBatch(db);
+  for (const id of ids) {
+    batch.update(doc(db, "linktrees", id), { deletedAt: null });
+  }
+  await batch.commit();
+}
+
+/** Exclusão definitiva em massa (lixeira) numa escrita atômica. */
+export async function batchDelete(ids: string[]): Promise<void> {
+  const db = getDb();
+  const batch = writeBatch(db);
+  for (const id of ids) {
+    batch.delete(doc(db, "linktrees", id));
+  }
+  await batch.commit();
 }
 
 /**

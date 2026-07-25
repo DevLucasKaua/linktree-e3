@@ -20,8 +20,10 @@ import { TEMPLATES, getTemplate } from "@/templates/registry";
 import { useToast } from "@/components/ui/Toast";
 import { useConfirm } from "@/components/ui/Confirm";
 import { Button } from "@/components/ui/Button";
-import { Select, FieldLabel } from "@/components/ui/Field";
+import { FieldLabel } from "@/components/ui/Field";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Segmented } from "@/components/ui/Segmented";
+import { SectionBareContext } from "@/components/ui/Section";
 import { PreviewFrame } from "@/components/editor/PreviewFrame";
 import { ClientForm } from "@/components/editor/ClientForm";
 import { ContactForm } from "@/components/editor/ContactForm";
@@ -32,6 +34,7 @@ import { LinksEditor } from "@/components/editor/LinksEditor";
 import { QrCodeModal } from "@/components/QrCodeModal";
 
 type SaveState = "salvo" | "salvando" | "erro";
+type EditorTab = "conteudo" | "perfil" | "aparencia" | "publicacao";
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
 const UNDO_LIMIT = 30;
@@ -55,12 +58,16 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">(
     "desktop"
   );
+  // "Conteúdo" primeiro: é onde o gestor passa a maior parte do tempo.
+  const [activeTab, setActiveTab] = useState<EditorTab>("conteudo");
   const [historyCount, setHistoryCount] = useState(0);
+  const [redoCount, setRedoCount] = useState(0);
   const pendingChanges = useRef<LinktreeUpdate>({});
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Espelho do docState para snapshots de undo fora do updater do setState.
   const docRef = useRef<LinktreeDoc>(initial);
   const history = useRef<LinktreeDoc[]>([]);
+  const redoStack = useRef<LinktreeDoc[]>([]);
   const lastSnapshotAt = useRef(0);
 
   useEffect(() => {
@@ -94,6 +101,11 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
         setHistoryCount(history.current.length);
       }
       lastSnapshotAt.current = now;
+      // Edição nova invalida o "refazer" (semântica clássica de undo/redo).
+      if (redoStack.current.length > 0) {
+        redoStack.current = [];
+        setRedoCount(0);
+      }
 
       setDocState((current) => ({ ...current, ...changes }));
       pendingChanges.current = { ...pendingChanges.current, ...changes };
@@ -113,42 +125,93 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
     onChange({ ownerEmail: userEmail.toLowerCase() });
   }, [initial.ownerEmail, userEmail, onChange]);
 
+  /** Aplica um snapshot ao estado e enfileira os campos editáveis no autosave. */
+  const applySnapshot = useCallback(
+    (snapshot: LinktreeDoc) => {
+      lastSnapshotAt.current = Date.now();
+      setDocState(snapshot);
+      const {
+        id,
+        createdAt,
+        updatedAt,
+        updatedBy,
+        deletedAt,
+        lastExportedAt,
+        ...editable
+      } = snapshot;
+      void id;
+      void createdAt;
+      void updatedAt;
+      void updatedBy;
+      void deletedAt;
+      void lastExportedAt;
+      pendingChanges.current = { ...pendingChanges.current, ...editable };
+      setSaveState("salvando");
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(flush, AUTOSAVE_DEBOUNCE_MS);
+    },
+    [flush]
+  );
+
+  /** Desfaz o último passo (o estado atual vai para a pilha de refazer). */
   const handleUndo = useCallback(() => {
     const snapshot = history.current.pop();
     if (!snapshot) return;
     setHistoryCount(history.current.length);
-    lastSnapshotAt.current = Date.now();
-    setDocState(snapshot);
-    // O snapshot inteiro (menos id/timestamps) entra na fila do autosave.
-    const { id, createdAt, updatedAt, updatedBy, ...editable } = snapshot;
-    void id;
-    void createdAt;
-    void updatedAt;
-    void updatedBy;
-    pendingChanges.current = { ...pendingChanges.current, ...editable };
-    setSaveState("salvando");
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(flush, AUTOSAVE_DEBOUNCE_MS);
-  }, [flush]);
+    redoStack.current.push(docRef.current);
+    setRedoCount(redoStack.current.length);
+    applySnapshot(snapshot);
+  }, [applySnapshot]);
 
-  // Ctrl+Z global; dentro de campos de texto vale o undo nativo do navegador.
+  /** Refaz o passo desfeito (oposto do desfazer). */
+  const handleRedo = useCallback(() => {
+    const snapshot = redoStack.current.pop();
+    if (!snapshot) return;
+    setRedoCount(redoStack.current.length);
+    history.current.push(docRef.current);
+    if (history.current.length > UNDO_LIMIT) history.current.shift();
+    setHistoryCount(history.current.length);
+    applySnapshot(snapshot);
+  }, [applySnapshot]);
+
+  /** Descarta tudo: volta ao estado de quando o editor foi aberto (undoável). */
+  const handleReset = useCallback(async () => {
+    const confirmed = await confirmDialog({
+      title: "Descartar todas as alterações?",
+      message:
+        "O linktree volta ao estado de quando você abriu o editor. Dá para desfazer essa ação com Ctrl+Z.",
+      confirmLabel: "Descartar tudo",
+      danger: true,
+    });
+    if (!confirmed) return;
+    history.current.push(docRef.current);
+    if (history.current.length > UNDO_LIMIT) history.current.shift();
+    setHistoryCount(history.current.length);
+    redoStack.current = [];
+    setRedoCount(0);
+    applySnapshot(initial);
+  }, [applySnapshot, confirmDialog, initial]);
+
+  // Ctrl+Z / Ctrl+Shift+Z (ou Ctrl+Y) globais; dentro de campos de texto
+  // vale o undo nativo do navegador.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      const isUndo =
-        (event.ctrlKey || event.metaKey) &&
-        !event.shiftKey &&
-        event.key.toLowerCase() === "z";
-      if (!isUndo) return;
+      if (!(event.ctrlKey || event.metaKey)) return;
+      const key = event.key.toLowerCase();
+      const isUndo = key === "z" && !event.shiftKey;
+      const isRedo = (key === "z" && event.shiftKey) || key === "y";
+      if (!isUndo && !isRedo) return;
       const target = event.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable]")) {
         return;
       }
       event.preventDefault();
-      handleUndo();
+      if (isUndo) handleUndo();
+      else handleRedo();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [handleUndo]);
+  }, [handleUndo, handleRedo]);
 
   // Salva pendências ao sair da página.
   useEffect(() => {
@@ -256,24 +319,40 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
                 ? "salvando…"
                 : "salvo"}
           </span>
-          <Select
+          <Dropdown
+            dense
+            label="Template"
             value={docState.templateId}
-            onChange={(event) => handleTemplateChange(event.target.value)}
-            className="w-auto"
-          >
-            {Object.values(TEMPLATES).map((template) => (
-              <option key={template.id} value={template.id}>
-                {template.name}
-              </option>
-            ))}
-          </Select>
+            onChange={handleTemplateChange}
+            options={Object.values(TEMPLATES).map((template) => ({
+              value: template.id,
+              label: template.name,
+            }))}
+            className="w-44"
+          />
           <Button
             variant="icon"
             onClick={handleUndo}
             disabled={historyCount === 0}
-            title="Desfazer (Ctrl+Z)"
+            title="Desfazer a última alteração (Ctrl+Z)"
           >
             <i className="ti ti-arrow-back-up" />
+          </Button>
+          <Button
+            variant="icon"
+            onClick={handleRedo}
+            disabled={redoCount === 0}
+            title="Refazer (Ctrl+Shift+Z)"
+          >
+            <i className="ti ti-arrow-forward-up" />
+          </Button>
+          <Button
+            variant="icon"
+            onClick={handleReset}
+            disabled={historyCount === 0 && redoCount === 0}
+            title="Descartar todas as alterações desta sessão"
+          >
+            <i className="ti ti-restore" />
           </Button>
           <Button onClick={handleShowQr}>
             <i className="ti ti-qrcode" />
@@ -291,13 +370,57 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_420px]">
-        <div className="flex min-w-0 flex-col gap-8">
-          <ClientForm value={docState} onChange={onChange} />
-          <ContactForm value={docState} onChange={onChange} />
-          <SocialsEditor value={docState} onChange={onChange} />
-          <TrackingForm value={docState} onChange={onChange} />
-          <PaletteEditor value={docState} onChange={onChange} />
-          <LinksEditor value={docState} onChange={onChange} />
+        {/* Card único com abas: menos scroll, seções agrupadas por tarefa */}
+        <div className="glass flex min-w-0 flex-col self-start rounded-[20px] border border-hair bg-surface">
+          <div className="border-b border-hair p-3">
+            <Segmented
+              grow
+              value={activeTab}
+              onChange={setActiveTab}
+              options={[
+                { value: "conteudo", label: "Conteúdo", icon: "layout-list" },
+                { value: "perfil", label: "Perfil", icon: "user" },
+                { value: "aparencia", label: "Aparência", icon: "palette" },
+                {
+                  value: "publicacao",
+                  label: "Publicação",
+                  icon: "world-upload",
+                },
+              ]}
+            />
+          </div>
+          <div className="p-5">
+            <SectionBareContext.Provider value={true}>
+              {activeTab === "conteudo" && (
+                <LinksEditor value={docState} onChange={onChange} />
+              )}
+              {activeTab === "perfil" && (
+                <>
+                  <ClientForm value={docState} onChange={onChange} />
+                  <div className="mt-6 border-t border-hair pt-5">
+                    <FieldLabel>Redes sociais</FieldLabel>
+                    <div className="mt-3">
+                      <SocialsEditor value={docState} onChange={onChange} />
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeTab === "aparencia" && (
+                <PaletteEditor value={docState} onChange={onChange} />
+              )}
+              {activeTab === "publicacao" && (
+                <>
+                  <ContactForm value={docState} onChange={onChange} />
+                  <div className="mt-6 border-t border-hair pt-5">
+                    <FieldLabel>Rastreamento</FieldLabel>
+                    <div className="mt-3">
+                      <TrackingForm value={docState} onChange={onChange} />
+                    </div>
+                  </div>
+                </>
+              )}
+            </SectionBareContext.Provider>
+          </div>
         </div>
 
         <div className="lg:sticky lg:top-6 lg:self-start">
@@ -318,18 +441,18 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
           </div>
           {previewMode === "mobile" ? (
             /* Moldura de celular: bezel escuro fixo, independente do tema */
-            <div className="mx-auto w-[375px] max-w-full overflow-hidden rounded-[38px] border-[10px] border-[#211f1d] bg-[#211f1d] shadow-big">
+            <div className="mx-auto w-full max-w-[375px] overflow-hidden rounded-[38px] border-[10px] border-[#211f1d] bg-[#211f1d] shadow-big">
               <PreviewFrame
                 config={docState}
                 photoSrc={docState.photoUrl}
-                className="block h-[680px] w-full rounded-[28px] bg-white"
+                className="block h-[min(680px,calc(100vh-230px))] w-full rounded-[28px] bg-white"
               />
             </div>
           ) : (
             <PreviewFrame
               config={docState}
               photoSrc={docState.photoUrl}
-              className="h-[700px] w-full rounded-xl border border-hair bg-white shadow-card"
+              className="h-[min(700px,calc(100vh-180px))] w-full rounded-xl border border-hair bg-white shadow-card"
             />
           )}
         </div>
