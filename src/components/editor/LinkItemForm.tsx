@@ -2,7 +2,11 @@
 
 import type { LinkItem, UtmParams } from "@/templates/types";
 import { IconPicker } from "@/components/editor/IconPicker";
-import { isValidHttpUrl, youtubeVideoId } from "@/lib/utils";
+import {
+  isValidHttpUrl,
+  sanitizePhoneInput,
+  youtubeVideoId,
+} from "@/lib/utils";
 import { Input, Textarea } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -23,8 +27,11 @@ const TYPE_NAMES = {
   youtube: "Vídeo",
 } as const;
 
-const DETAILS_SUMMARY_CLASS =
-  "cursor-pointer select-none text-muted transition-colors hover:text-ink";
+/** Gaveta (accordion) no vocabulário liquid glass: chip cápsula + chevron. */
+const SUMMARY_CLASS =
+  "glass pressable inline-flex cursor-pointer select-none list-none items-center gap-1.5 rounded-full border border-hair bg-field px-3 py-1 text-xs text-muted hover:text-ink [&::-webkit-details-marker]:hidden";
+const DRAWER_CLASS =
+  "mt-2 animate-rise rounded-xl border border-hair bg-field p-3";
 
 export function LinkItemForm({
   link,
@@ -101,6 +108,7 @@ export function LinkItemForm({
           onChange={(event) => onUpdate({ label: event.target.value })}
           placeholder="Título"
           aria-label="Título"
+          maxLength={80}
           className="flex-1 py-1.5"
         />
         {type !== "link" && <Badge>{TYPE_NAMES[type]}</Badge>}
@@ -149,6 +157,7 @@ export function LinkItemForm({
           onChange={(event) => onUpdate({ description: event.target.value })}
           placeholder="Descrição (opcional)"
           aria-label="Descrição (opcional)"
+          maxLength={140}
           className="py-1.5"
         />
       )}
@@ -162,6 +171,7 @@ export function LinkItemForm({
             onChange={(event) => onUpdate({ url: event.target.value })}
             placeholder="https://..."
             aria-label="URL"
+            maxLength={500}
             className="py-1.5"
           />
           {urlInvalid && (
@@ -176,11 +186,15 @@ export function LinkItemForm({
         <>
           <Input
             type="tel"
+            inputMode="tel"
             invalid={phoneInvalid}
             value={link.url}
-            onChange={(event) => onUpdate({ url: event.target.value })}
+            onChange={(event) =>
+              onUpdate({ url: sanitizePhoneInput(event.target.value) })
+            }
             placeholder="Número com DDI — ex: +55 11 99999-9999"
             aria-label="Número do WhatsApp"
+            maxLength={20}
             className="py-1.5"
           />
           {phoneInvalid && (
@@ -195,6 +209,7 @@ export function LinkItemForm({
             onChange={(event) => onUpdate({ message: event.target.value })}
             placeholder="Mensagem pré-preenchida (opcional) — ex: Olá! Gostaria de agendar uma consulta."
             aria-label="Mensagem pré-preenchida"
+            maxLength={500}
             className="py-1.5"
           />
         </>
@@ -209,6 +224,7 @@ export function LinkItemForm({
             onChange={(event) => onUpdate({ url: event.target.value })}
             placeholder="https://youtube.com/watch?v=..."
             aria-label="URL do vídeo"
+            maxLength={300}
             className="py-1.5"
           />
           {videoInvalid && (
@@ -221,14 +237,19 @@ export function LinkItemForm({
       )}
 
       {/* Agendamento: janela de exibição do bloco na página */}
-      <details className="text-sm" open={Boolean(link.startAt || link.endAt)}>
-        <summary className={DETAILS_SUMMARY_CLASS}>
+      <details className="group" open={Boolean(link.startAt || link.endAt)}>
+        <summary className={SUMMARY_CLASS}>
+          <i className="ti ti-calendar-time" />
           Agendamento
           {(link.startAt || link.endAt) && (
-            <span className="ml-2 font-mono text-xs text-accent">ativo</span>
+            <span className="font-mono text-[10px] uppercase text-accent-deep">
+              ativo
+            </span>
           )}
+          <i className="ti ti-chevron-down transition-transform duration-150 group-open:rotate-180" />
         </summary>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className={DRAWER_CLASS}>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-soft">
               Exibir a partir de
@@ -260,6 +281,7 @@ export function LinkItemForm({
           Fora da janela, o bloco fica oculto na página publicada — a troca
           acontece sozinha, sem novo export.
         </p>
+        </div>
       </details>
 
       {/* Destaque: borda no acento + selo de estrela + pulso sutil */}
@@ -279,22 +301,29 @@ export function LinkItemForm({
       )}
 
       {type === "link" && (
-        <details className="text-sm">
-          <summary className={DETAILS_SUMMARY_CLASS}>Parâmetros UTM</summary>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {UTM_FIELDS.map(({ key, label }) => (
-              <label key={key} className="flex flex-col gap-1">
-                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-soft">
-                  {label}
-                </span>
-                <Input
-                  value={link.utm?.[key] ?? ""}
-                  onChange={(event) => updateUtm(key, event.target.value)}
-                  placeholder={`utm_${label}`}
-                  className="px-2 py-1"
-                />
-              </label>
-            ))}
+        <details className="group">
+          <summary className={SUMMARY_CLASS}>
+            <i className="ti ti-chart-bar" />
+            Parâmetros UTM
+            <i className="ti ti-chevron-down transition-transform duration-150 group-open:rotate-180" />
+          </summary>
+          <div className={DRAWER_CLASS}>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {UTM_FIELDS.map(({ key, label }) => (
+                <label key={key} className="flex flex-col gap-1">
+                  <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-soft">
+                    {label}
+                  </span>
+                  <Input
+                    value={link.utm?.[key] ?? ""}
+                    onChange={(event) => updateUtm(key, event.target.value)}
+                    placeholder={`utm_${label}`}
+                    maxLength={100}
+                    className="px-2 py-1"
+                  />
+                </label>
+              ))}
+            </div>
           </div>
         </details>
       )}

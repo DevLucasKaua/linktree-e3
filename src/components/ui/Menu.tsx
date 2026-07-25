@@ -37,7 +37,7 @@ export function Menu({
         title={label}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className={`pressable flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-hover hover:text-ink ${
+        className={`pressable flex h-8 w-8 cursor-pointer items-center justify-center rounded-full hover:bg-hover hover:text-ink ${
           open ? "bg-hover text-ink" : "text-muted"
         }`}
       >

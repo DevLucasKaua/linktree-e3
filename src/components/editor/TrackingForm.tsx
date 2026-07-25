@@ -12,24 +12,28 @@ const FIELDS: {
   label: string;
   placeholder: string;
   formatHint: string;
+  maxLength: number;
 }[] = [
   {
     key: "ga4Id",
     label: "Google Analytics 4",
     placeholder: "G-XXXXXXXXXX",
     formatHint: "começa com G-",
+    maxLength: 15,
   },
   {
     key: "metaPixelId",
     label: "Meta Pixel",
     placeholder: "1234567890123456",
     formatHint: "só números",
+    maxLength: 20,
   },
   {
     key: "gtmId",
     label: "Google Tag Manager",
     placeholder: "GTM-XXXXXXX",
     formatHint: "começa com GTM-",
+    maxLength: 12,
   },
 ];
 
@@ -45,7 +49,7 @@ export function TrackingForm({ value, onChange }: SectionProps) {
       description="Os pixels são injetados no site exportado; o cliente acompanha as visitas na própria ferramenta. Campos vazios ficam de fora."
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {FIELDS.map(({ key, label, placeholder, formatHint }) => {
+        {FIELDS.map(({ key, label, placeholder, formatHint, maxLength }) => {
           const fieldValue = value.tracking[key];
           const invalid =
             fieldValue.trim() !== "" &&
@@ -65,6 +69,7 @@ export function TrackingForm({ value, onChange }: SectionProps) {
                 value={fieldValue}
                 onChange={(event) => update(key, event.target.value)}
                 placeholder={placeholder}
+                maxLength={maxLength}
                 className="font-mono"
               />
             </Field>

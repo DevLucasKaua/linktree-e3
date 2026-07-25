@@ -83,6 +83,27 @@ export function scheduleAttrs(item: LinkItem): {
   };
 }
 
+/**
+ * Sanitiza campos de telefone enquanto digita: só dígitos e formatação
+ * (`+` no início, espaço, hífen, parênteses), com máximo de 13 dígitos
+ * (DDI 2 + DDD 2 + celular 9, padrão brasileiro).
+ */
+export function sanitizePhoneInput(value: string): string {
+  let cleaned = value.replace(/[^\d+()\-\s]/g, "");
+  // "+" permitido só como primeiro caractere.
+  cleaned = cleaned.charAt(0) + cleaned.slice(1).replace(/\+/g, "");
+  let digits = 0;
+  let result = "";
+  for (const char of cleaned) {
+    if (/\d/.test(char)) {
+      if (digits >= 13) continue;
+      digits++;
+    }
+    result += char;
+  }
+  return result;
+}
+
 /** true se a URL é http(s) válida (validação dos campos de URL do editor). */
 export function isValidHttpUrl(url: string): boolean {
   try {

@@ -25,7 +25,9 @@ export function Sidebar() {
     <aside className="flex w-full shrink-0 flex-col gap-3 px-4 pb-4 pt-4 md:sticky md:top-0 md:h-screen md:w-[232px]">
       {/* Marca: tile escuro com o monograma E3 */}
       <Link href="/painel" className="flex items-center gap-2.5 px-1 py-1">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-hair bg-surface-2 p-2">
+        {/* Tile sempre escuro (como o favicon): o "E" cinza-claro da logo
+            contrasta nos dois temas */}
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-white/10 bg-[#15161c] p-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-icon.svg" alt="" className="h-full w-full" />
         </span>
