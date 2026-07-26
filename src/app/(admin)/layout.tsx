@@ -13,7 +13,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (isEditor) {
     return (
       <AuthGuard>
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-5 md:px-7">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-5 md:px-8">
           {children}
         </div>
       </AuthGuard>

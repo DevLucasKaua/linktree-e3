@@ -144,6 +144,9 @@ body {
     radial-gradient(720px 560px at 94% -8%, var(--blob-2), transparent 62%),
     radial-gradient(640px 520px at 80% 78%, var(--blob-3), transparent 60%);
   background-attachment: fixed;
+  /* Rede de segurança: nada gera barra horizontal ("clip" não cria
+     contexto de rolagem, então sticky continua funcionando). */
+  overflow-x: clip;
   transition:
     background-color 0.25s,
     color 0.25s;
