@@ -14,6 +14,24 @@ import { css as gradientGlassCss } from "./gradient-glass/styles";
 import * as executiveMeta from "./executive/meta";
 import { Template as ExecutiveTemplate } from "./executive/Template";
 import { css as executiveCss } from "./executive/styles";
+import * as photoBgMeta from "./photo-bg/meta";
+import { Template as PhotoBgTemplate } from "./photo-bg/Template";
+import { css as photoBgCss } from "./photo-bg/styles";
+import * as neonSolidMeta from "./neon-solid/meta";
+import { Template as NeonSolidTemplate } from "./neon-solid/Template";
+import { css as neonSolidCss } from "./neon-solid/styles";
+import * as editorialPapelMeta from "./editorial-papel/meta";
+import { Template as EditorialPapelTemplate } from "./editorial-papel/Template";
+import { css as editorialPapelCss } from "./editorial-papel/styles";
+import * as monoAgenciaMeta from "./mono-agencia/meta";
+import { Template as MonoAgenciaTemplate } from "./mono-agencia/Template";
+import { css as monoAgenciaCss } from "./mono-agencia/styles";
+import * as bentoPerfilMeta from "./bento-perfil/meta";
+import { Template as BentoPerfilTemplate } from "./bento-perfil/Template";
+import { css as bentoPerfilCss } from "./bento-perfil/styles";
+import * as heroFotoMeta from "./hero-foto/meta";
+import { Template as HeroFotoTemplate } from "./hero-foto/Template";
+import { css as heroFotoCss } from "./hero-foto/styles";
 
 export const TEMPLATES: Record<string, TemplateDef> = {
   [e3ClassicMeta.id]: {
@@ -41,6 +59,36 @@ export const TEMPLATES: Record<string, TemplateDef> = {
     Component: ExecutiveTemplate,
     css: executiveCss,
   },
+  [photoBgMeta.id]: {
+    ...photoBgMeta,
+    Component: PhotoBgTemplate,
+    css: photoBgCss,
+  },
+  [neonSolidMeta.id]: {
+    ...neonSolidMeta,
+    Component: NeonSolidTemplate,
+    css: neonSolidCss,
+  },
+  [editorialPapelMeta.id]: {
+    ...editorialPapelMeta,
+    Component: EditorialPapelTemplate,
+    css: editorialPapelCss,
+  },
+  [monoAgenciaMeta.id]: {
+    ...monoAgenciaMeta,
+    Component: MonoAgenciaTemplate,
+    css: monoAgenciaCss,
+  },
+  [bentoPerfilMeta.id]: {
+    ...bentoPerfilMeta,
+    Component: BentoPerfilTemplate,
+    css: bentoPerfilCss,
+  },
+  [heroFotoMeta.id]: {
+    ...heroFotoMeta,
+    Component: HeroFotoTemplate,
+    css: heroFotoCss,
+  },
 };
 
 export const DEFAULT_TEMPLATE_ID = e3ClassicMeta.id;
@@ -62,6 +110,7 @@ export const SAMPLE_CONFIG: Omit<LinktreeConfig, "templateId" | "palette"> = {
   },
   tracking: { ga4Id: "", metaPixelId: "", gtmId: "" },
   fontId: "",
+  bgImageUrl: null,
   socials: [
     {
       id: "sample-social-1",

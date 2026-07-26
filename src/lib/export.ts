@@ -60,13 +60,20 @@ export async function exportLinktreeZip(doc: LinktreeDoc): Promise<void> {
   const includeVcard = hasVcardData(doc);
   const publishedUrl = doc.publishedUrl.trim();
 
+  const hasBg = Boolean(doc.bgImageUrl);
   const html = buildLinktreeHtml(doc, {
     photoSrc: hasPhoto ? "foto.jpg" : null,
+    bgSrc: hasBg ? "fundo.jpg" : null,
     vcardSrc: includeVcard ? "contato.vcf" : null,
     faviconSrc: hasPhoto ? "favicon.png" : null,
     appleIconSrc: hasPhoto ? "apple-touch-icon.png" : null,
   });
   folder.file("index.html", html);
+
+  if (hasBg) {
+    const bgBlob = await fetch(doc.bgImageUrl!).then((res) => res.blob());
+    folder.file("fundo.jpg", bgBlob);
+  }
 
   if (hasPhoto) {
     // photoUrl é um data URI JPEG; fetch local o converte em blob (sem rede).
@@ -96,6 +103,7 @@ export async function exportLinktreeZip(doc: LinktreeDoc): Promise<void> {
 export async function copyLinktreeHtml(doc: LinktreeDoc): Promise<void> {
   const html = buildLinktreeHtml(doc, {
     photoSrc: doc.photoUrl,
+    bgSrc: doc.bgImageUrl,
     vcardSrc: vcardDataUri(doc, doc.photoUrl),
     faviconSrc: doc.photoUrl
       ? await photoToIconDataUri(doc.photoUrl, FAVICON_SIZE)

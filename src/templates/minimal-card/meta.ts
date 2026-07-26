@@ -13,3 +13,7 @@ export const defaultPalette: Palette = {
   muted: "#6b7280",
   border: "#e5e7eb",
 };
+
+/** Scrim claro suave: o card branco central continua protagonista. */
+export const bgScrim =
+  "linear-gradient(rgba(244,244,246,0.82), rgba(244,244,246,0.78))";

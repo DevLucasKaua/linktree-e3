@@ -13,6 +13,8 @@ export interface RenderOptions {
   photoSrc?: string | null;
   /** href do vCard: data URI (preview/copiar) ou "contato.vcf" (export). */
   vcardSrc?: string | null;
+  /** src da imagem de fundo: data URI (preview/copiar) ou "fundo.jpg" (export). */
+  bgSrc?: string | null;
   /** href do favicon 32px: data URI (copiar) ou "favicon.png" (export). */
   faviconSrc?: string | null;
   /** href do ícone de toque 180px: data URI (copiar) ou "apple-touch-icon.png" (export). */
@@ -86,12 +88,25 @@ ${headExtras}
 <link rel="stylesheet" href="${TABLER_ICONS_CDN}">
 ${fontAssets(config.fontId).links}<style>
 ${template.css(config.palette)}
-${fontAssets(config.fontId).css}</style>
+${fontAssets(config.fontId).css}${bgCss(opts.bgSrc, template.bgScrim)}</style>
 </head>
 <body>
 ${tracking.bodyStart}${body}
 ${scheduleScript}</body>
 </html>
+`;
+}
+
+/**
+ * Imagem de fundo escolhida pelo gestor: entra no FINAL do <style> (vence o
+ * fundo padrão do template) com o scrim do próprio template por cima para
+ * preservar contraste. Aspas no url() lidam com os ":" e "," do data URI.
+ */
+function bgCss(bgSrc: string | null | undefined, scrim?: string): string {
+  if (!bgSrc) return "";
+  const safeSrc = bgSrc.replaceAll('"', "");
+  const overlay = scrim ?? "linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5))";
+  return `body{background:${overlay},url("${safeSrc}") center / cover no-repeat fixed}
 `;
 }
 
