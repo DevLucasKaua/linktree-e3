@@ -40,6 +40,8 @@ service cloud.firestore {
         && d.palette is map
         && d.links is list && d.links.size() <= 60
         && (d.photoUrl == null || (d.photoUrl is string && d.photoUrl.size() < 1000000))
+        && (d.get('bgImageUrl', null) == null
+          || (d.bgImageUrl is string && d.bgImageUrl.size() < 600000))
         && d.status in ['rascunho', 'publicado']
         && d.get('socials', []) is list
         && d.get('publishedUrl', '') is string

@@ -13,3 +13,7 @@ export const defaultPalette: Palette = {
   muted: "rgba(244,241,232,0.5)",
   border: "#c9a227",
 };
+
+/** Scrim navy: mantém a identidade executiva sobre a foto. */
+export const bgScrim =
+  "linear-gradient(rgba(8,20,38,0.72), rgba(8,20,38,0.66))";
