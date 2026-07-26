@@ -566,7 +566,7 @@ export default function PainelPage() {
 
       {/* Barra flutuante de ações em massa */}
       {selected.size > 0 && (
-        <div className="glass-strong fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 animate-toast-in flex-wrap items-center justify-center gap-2 rounded-full border border-hair bg-surface py-2 pl-5 pr-2 shadow-big">
+        <div className="glass-strong fixed inset-x-4 bottom-6 z-50 mx-auto flex w-fit max-w-[calc(100vw-2rem)] animate-toast-in flex-wrap items-center justify-center gap-2 rounded-full border border-hair bg-surface py-2 pl-5 pr-2 shadow-big">
           <span className="font-mono text-xs text-soft">
             {selected.size} selecionado{selected.size > 1 ? "s" : ""}
           </span>

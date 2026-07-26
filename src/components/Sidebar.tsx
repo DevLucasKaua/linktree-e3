@@ -22,7 +22,7 @@ export function Sidebar() {
     .toUpperCase();
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-3 px-4 pb-4 pt-4 md:sticky md:top-0 md:h-screen md:w-[232px]">
+    <aside className="flex w-full shrink-0 flex-col gap-3 px-5 pb-4 pt-4 md:sticky md:top-0 md:h-screen md:w-[280px]">
       {/* Marca: tile escuro com o monograma E3 */}
       <Link href="/painel" className="flex items-center gap-2.5 px-1 py-1">
         {/* Tile sempre escuro (como o favicon): o "E" cinza-claro da logo
@@ -64,42 +64,50 @@ export function Sidebar() {
         </p>
       </div>
 
-      {/* Navegação */}
-      <nav className="glass flex flex-col gap-0.5 rounded-2xl border border-hair bg-surface-2 p-1.5">
-        {NAV.map(({ href, icon, label }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-sm transition-colors ${
-                active
-                  ? "border border-hair bg-active font-medium"
-                  : "border border-transparent hover:bg-hover"
-              }`}
-            >
-              <i className={`ti ti-${icon} opacity-85`} />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Navegação + sessão num card só (o card de nav com item único
+          parecia sem ação; a conta e o sair dão conteúdo real a ele) */}
+      <div className="glass flex flex-col gap-0.5 rounded-2xl border border-hair bg-surface-2 p-1.5">
+        <nav className="flex flex-col gap-0.5">
+          {NAV.map(({ href, icon, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-sm transition-colors ${
+                  active
+                    ? "border border-hair bg-active font-medium"
+                    : "border border-transparent hover:bg-hover"
+                }`}
+              >
+                <i className={`ti ti-${icon} opacity-85`} />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="mx-2 my-1 border-t border-hair" />
+
+        {/* Sessão: conta logada + sair */}
+        <div className="flex items-center justify-between gap-2 py-1 pl-3 pr-1">
+          <span
+            className="truncate text-xs text-muted"
+            title={user?.email ?? ""}
+          >
+            {user?.email}
+          </span>
+          <button
+            onClick={signOut}
+            title="Sair"
+            className="pressable flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted hover:bg-hover hover:text-neg"
+          >
+            <i className="ti ti-logout" />
+          </button>
+        </div>
+      </div>
 
       <div className="min-h-4 flex-1" />
-
-      {/* Sessão */}
-      <div className="flex items-center justify-between gap-2 px-1">
-        <span className="truncate text-xs text-muted" title={user?.email ?? ""}>
-          {user?.email}
-        </span>
-        <button
-          onClick={signOut}
-          title="Sair"
-          className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted transition-colors hover:bg-hover hover:text-ink"
-        >
-          <i className="ti ti-logout" />
-        </button>
-      </div>
 
       {/* CTA no gradiente da marca, com botão cravado no canto (liquid glass) */}
       <Link

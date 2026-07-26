@@ -82,8 +82,9 @@ export function LinkItemForm({
         link.active ? "" : "opacity-60"
       }`}
     >
-      {/* Linha do topo: alça de arrastar, ícone, título, selo do tipo e ações */}
-      <div className="flex items-center gap-2">
+      {/* Linha do topo: alça, ícone, título, selo e ações — com wrap, as
+          ações caem para a segunda linha no mobile em vez de estourar */}
+      <div className="flex flex-wrap items-center gap-2">
         <span
           draggable
           onDragStart={onDragStart}
@@ -109,7 +110,7 @@ export function LinkItemForm({
           placeholder="Título"
           aria-label="Título"
           maxLength={80}
-          className="flex-1 py-1.5"
+          className="min-w-0 flex-1 py-1.5"
         />
         {type !== "link" && <Badge>{TYPE_NAMES[type]}</Badge>}
         <div className="flex shrink-0 items-center gap-1">
@@ -308,9 +309,9 @@ export function LinkItemForm({
             <i className="ti ti-chevron-down transition-transform duration-150 group-open:rotate-180" />
           </summary>
           <div className={DRAWER_CLASS}>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {UTM_FIELDS.map(({ key, label }) => (
-                <label key={key} className="flex flex-col gap-1">
+                <label key={key} className="flex min-w-0 flex-col gap-1">
                   <span className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-soft">
                     {label}
                   </span>

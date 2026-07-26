@@ -375,6 +375,7 @@ export function EditorShell({ initial }: { initial: LinktreeDoc }) {
           <div className="border-b border-hair p-3">
             <Segmented
               grow
+              responsiveLabels
               value={activeTab}
               onChange={setActiveTab}
               options={[
