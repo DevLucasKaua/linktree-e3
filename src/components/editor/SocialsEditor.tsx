@@ -67,7 +67,7 @@ export function SocialsEditor({ value, onChange }: SectionProps) {
                     }
                     placeholder="https://instagram.com/cliente"
                     aria-label="URL da rede social"
-                    className="flex-1 py-1.5"
+                    className="min-w-0 flex-1 py-1.5"
                   />
                   <Button
                     variant="iconDanger"

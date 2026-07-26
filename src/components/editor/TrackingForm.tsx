@@ -48,7 +48,7 @@ export function TrackingForm({ value, onChange }: SectionProps) {
       title="Rastreamento"
       description="Os pixels são injetados no site exportado; o cliente acompanha as visitas na própria ferramenta. Campos vazios ficam de fora."
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {FIELDS.map(({ key, label, placeholder, formatHint, maxLength }) => {
           const fieldValue = value.tracking[key];
           const invalid =

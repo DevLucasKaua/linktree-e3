@@ -82,6 +82,8 @@ export interface LinktreeConfig {
   tracking: TrackingInfo;
   /** ID de fonte Google (src/templates/fonts.ts); "" mantém a fonte do template. */
   fontId: string;
+  /** Imagem de fundo da página como data URI JPEG (null = fundo padrão do template). */
+  bgImageUrl: string | null;
 }
 
 export interface TemplateProps {
@@ -97,6 +99,11 @@ export interface TemplateDef {
   name: string;
   description: string;
   defaultPalette: Palette;
+  /**
+   * Gradiente sobreposto à imagem de fundo do usuário para preservar o
+   * contraste do template (escuro nos templates dark, claro nos claros).
+   */
+  bgScrim?: string;
   Component: (props: TemplateProps) => ReactElement;
   /** CSS puro do template com a paleta interpolada. */
   css: (palette: Palette) => string;

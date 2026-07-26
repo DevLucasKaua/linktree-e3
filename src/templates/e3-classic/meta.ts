@@ -13,3 +13,7 @@ export const defaultPalette: Palette = {
   muted: "rgba(255,255,255,0.5)",
   border: "#ff6a00",
 };
+
+/** Scrim sobre a imagem de fundo do usuário (mantém o contraste escuro). */
+export const bgScrim =
+  "linear-gradient(rgba(0,0,0,0.62), rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.68))";

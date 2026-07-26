@@ -80,14 +80,14 @@ export function IconPicker({
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="glass-strong absolute left-0 top-full z-50 mt-1 grid w-64 origin-top-left animate-menu-in grid-cols-6 gap-1 rounded-xl border border-hair bg-surface p-2 shadow-big">
+          <div className="glass-strong absolute left-0 top-full z-50 mt-1 grid w-[min(16rem,calc(100vw-4rem))] origin-top-left animate-menu-in grid-cols-5 gap-1 rounded-xl border border-hair bg-surface p-2 shadow-big sm:grid-cols-6">
             {ICONS.map((icon) => (
               <button
                 key={icon}
                 type="button"
                 onClick={() => handleSelect(icon)}
                 title={icon}
-                className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-lg transition-colors hover:bg-hover ${
+                className={`flex h-9 cursor-pointer items-center justify-center rounded-lg text-lg transition-colors hover:bg-hover ${
                   icon === value ? "bg-accent-soft text-accent-deep" : ""
                 }`}
               >

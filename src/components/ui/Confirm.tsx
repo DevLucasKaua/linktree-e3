@@ -62,7 +62,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             </>
           }
         >
-          <div className="whitespace-pre-line text-sm text-soft">
+          <div className="whitespace-pre-line break-words text-sm text-soft">
             {options.message}
           </div>
         </Modal>

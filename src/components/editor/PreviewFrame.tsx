@@ -23,6 +23,7 @@ export function PreviewFrame({
     () =>
       buildLinktreeHtml(config, {
         photoSrc,
+        bgSrc: config.bgImageUrl,
         // Data URI para o botão "Salvar contato" aparecer também no preview.
         vcardSrc: vcardDataUri(config, photoSrc ?? null),
       }),

@@ -13,3 +13,7 @@ export const defaultPalette: Palette = {
   muted: "rgba(255,255,255,0.55)",
   border: "rgba(255,255,255,0.18)",
 };
+
+/** Scrim escuro: os cartões de vidro seguem legíveis sobre a foto. */
+export const bgScrim =
+  "linear-gradient(rgba(10,10,16,0.6), rgba(10,10,16,0.55))";

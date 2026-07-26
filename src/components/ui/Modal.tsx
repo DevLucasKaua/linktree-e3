@@ -36,7 +36,9 @@ export function Modal({
         className="glass-strong w-full max-w-md animate-menu-in rounded-[20px] border border-hair bg-surface p-6 shadow-big"
       >
         <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
+        {subtitle && (
+          <p className="mt-0.5 break-all text-sm text-muted">{subtitle}</p>
+        )}
         <div className="mt-4">{children}</div>
         {footer && (
           <div className="mt-5 flex justify-end gap-2.5 border-t border-hair pt-4">

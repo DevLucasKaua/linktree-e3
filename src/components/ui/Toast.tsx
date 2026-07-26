@@ -39,7 +39,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <div
           key={toast.id}
           role="status"
-          className="glass-strong fixed bottom-6 left-1/2 z-[60] flex -translate-x-1/2 animate-toast-in items-center gap-2.5 rounded-full border border-white/10 bg-[rgba(19,20,26,0.9)] px-5 py-3 text-sm text-[#f2f3f7] shadow-big"
+          className="glass-strong fixed bottom-6 left-1/2 z-[60] flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 animate-toast-in items-center gap-2.5 rounded-full border border-white/10 bg-[rgba(19,20,26,0.9)] px-5 py-3 text-left text-sm text-[#f2f3f7] shadow-big"
         >
           {/* Toast é sempre escuro (referência), independe do tema */}
           <i

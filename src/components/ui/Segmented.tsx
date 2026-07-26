@@ -14,12 +14,15 @@ export function Segmented<T extends string>({
   onChange,
   options,
   grow = false,
+  responsiveLabels = false,
 }: {
   value: T;
   onChange: (next: T) => void;
   options: SegmentedOption<T>[];
   /** true = ocupa toda a largura, opções com flex-1. */
   grow?: boolean;
+  /** true = rótulos somem no mobile (ícone-only; o title mantém o nome). */
+  responsiveLabels?: boolean;
 }) {
   return (
     <div
@@ -42,7 +45,11 @@ export function Segmented<T extends string>({
           }`}
         >
           {option.icon && <i className={`ti ti-${option.icon}`} />}
-          {option.label}
+          {option.label && (
+            <span className={responsiveLabels ? "hidden sm:inline" : ""}>
+              {option.label}
+            </span>
+          )}
         </button>
       ))}
     </div>
